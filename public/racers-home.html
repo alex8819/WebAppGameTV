@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro Racers</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .landing .logo {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #e74c3c 0%, #f1c40f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .cars-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .landing .tagline {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 50px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .mode-btn {
+            padding: 25px 40px;
+            font-size: 1.3rem;
+            border-radius: 16px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.host {
+            background: linear-gradient(135deg, #e74c3c 0%, #f39c12 100%);
+            color: white;
+        }
+
+        .mode-btn.player {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #e74c3c;
+            color: var(--light);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(231, 76, 60, 0.3);
+        }
+
+        .mode-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 8px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--light);
+        }
+
+        .game-info {
+            margin-top: 50px;
+            max-width: 500px;
+        }
+
+        .game-info h3 {
+            color: var(--light);
+            margin-bottom: 15px;
+        }
+
+        .powerup-rules {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .powerup-rule {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+        }
+
+        .powerup-rule .emoji {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .powerup-rule .name {
+            font-weight: bold;
+            color: var(--light);
+            margin-right: 8px;
+        }
+
+        .controls-info {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .controls-info h4 {
+            color: var(--light);
+            margin-bottom: 15px;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: var(--gray);
+        }
+
+        .control-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .landing .logo {
+                font-size: 2.2rem;
+            }
+            .mode-btn {
+                padding: 20px 30px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Torna ai giochi</a>
+
+    <div class="landing">
+        <h1 class="logo">Micro Racers</h1>
+        <div class="cars-display">
+            <span>🏎️</span>
+            <span>🏁</span>
+            <span>🏎️</span>
+        </div>
+        <p class="tagline">Corsa adrenalinica con power-ups!</p>
+
+        <div class="mode-buttons">
+            <a href="/racers-host" class="mode-btn host">
+                OSPITA GARA
+                <div class="mode-desc">Apri sulla TV per creare la pista</div>
+            </a>
+            <a href="/racers-play" class="mode-btn player">
+                ENTRA IN GARA
+                <div class="mode-desc">Unisciti con il PIN dal tuo smartphone</div>
+            </a>
+        </div>
+
+        <div class="game-info">
+            <h3>Power-ups</h3>
+            <div class="powerup-rules">
+                <div class="powerup-rule">
+                    <span class="emoji">🚀</span>
+                    <span class="name">Turbo</span>
+                    <span>+50% velocità per 2 secondi</span>
+                </div>
+                <div class="powerup-rule">
+                    <span class="emoji">🛢️</span>
+                    <span class="name">Olio</span>
+                    <span>Lascia una macchia scivolosa</span>
+                </div>
+                <div class="powerup-rule">
+                    <span class="emoji">🎯</span>
+                    <span class="name">Missile</span>
+                    <span>Colpisce e rallenta chi ti precede</span>
+                </div>
+            </div>
+
+            <div class="controls-info">
+                <h4>Controlli</h4>
+                <div class="control-item">
+                    <span class="control-icon">📱</span>
+                    <span>Inclina il telefono per sterzare</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-icon">⚡</span>
+                    <span>Tieni premuto GAS per accelerare</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-icon">🛑</span>
+                    <span>Tieni premuto FRENO per frenare</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-icon">🎯</span>
+                    <span>Tocca il power-up per usarlo</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
