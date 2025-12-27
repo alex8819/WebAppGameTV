@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Elemental Clash - Gioca</title>
+    <link rel="stylesheet" href="/css/common.css?v=1">
+    <link rel="stylesheet" href="/css/elemental-player.css?v=1">
+</head>
+<body>
+    <div class="player-container">
+        <!-- Exit Button (visible during game) -->
+        <button class="exit-btn hidden" id="exit-btn" title="Esci dalla partita">✕</button>
+        <div class="exit-status hidden" id="exit-status">
+            <span id="exit-count">0</span>/<span id="exit-total">0</span> vogliono uscire
+        </div>
+
+        <!-- Join Screen -->
+        <div id="join-screen">
+            <h1 class="logo">Elemental Clash</h1>
+            <p class="tagline">Battaglia Elementale</p>
+
+            <div class="join-form">
+                <div class="form-group">
+                    <label for="pin-input">PIN Partita</label>
+                    <input type="text" id="pin-input" placeholder="Es: 4827" maxlength="4" inputmode="numeric" pattern="[0-9]*">
+                </div>
+
+                <div class="form-group">
+                    <label for="nickname-input">Il tuo nome</label>
+                    <input type="text" id="nickname-input" placeholder="Es: Drago" maxlength="12">
+                </div>
+
+                <div class="form-group">
+                    <label>Scegli il tuo avatar</label>
+                    <div class="avatar-selector" id="avatar-selector">
+                        <button type="button" class="avatar-btn" data-avatar="🐉">🐉</button>
+                        <button type="button" class="avatar-btn" data-avatar="🦅">🦅</button>
+                        <button type="button" class="avatar-btn" data-avatar="🐺">🐺</button>
+                        <button type="button" class="avatar-btn" data-avatar="🦁">🦁</button>
+                        <button type="button" class="avatar-btn" data-avatar="🐍">🐍</button>
+                        <button type="button" class="avatar-btn" data-avatar="🦊">🦊</button>
+                        <button type="button" class="avatar-btn" data-avatar="🐲">🐲</button>
+                        <button type="button" class="avatar-btn" data-avatar="🦈">🦈</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Scegli il tuo elemento</label>
+                    <div class="element-selector" id="element-selector">
+                        <button type="button" class="element-btn fire" data-element="fire">
+                            <span class="element-icon">🔥</span>
+                            <span class="element-name">Fuoco</span>
+                        </button>
+                        <button type="button" class="element-btn water" data-element="water">
+                            <span class="element-icon">💧</span>
+                            <span class="element-name">Acqua</span>
+                        </button>
+                        <button type="button" class="element-btn earth" data-element="earth">
+                            <span class="element-icon">🌍</span>
+                            <span class="element-name">Terra</span>
+                        </button>
+                        <button type="button" class="element-btn air" data-element="air">
+                            <span class="element-icon">💨</span>
+                            <span class="element-name">Aria</span>
+                        </button>
+                    </div>
+                    <div class="element-info" id="element-info"></div>
+                </div>
+
+                <button id="btn-join" class="btn btn-fire" style="width: 100%">ENTRA IN ARENA</button>
+
+                <div class="error-message hidden" id="join-error"></div>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="player-lobby" class="hidden">
+            <div class="lobby-header">
+                <h2>Arena</h2>
+                <div class="lobby-pin">PIN: <span id="lobby-pin-display">----</span></div>
+            </div>
+
+            <div class="your-character">
+                <div class="character-avatar" id="your-avatar">🐉</div>
+                <div class="character-name" id="your-name">Nome</div>
+                <div class="character-element" id="your-element">🔥 Fuoco</div>
+            </div>
+
+            <p class="waiting-text">In attesa che la battaglia inizi...</p>
+
+            <div class="players-in-lobby">
+                <h3>Sfidanti (<span id="lobby-player-count">0</span>/8)</h3>
+                <ul class="player-list" id="lobby-players-list"></ul>
+            </div>
+        </div>
+
+        <!-- Mini-Game Screen -->
+        <div id="minigame-screen" class="hidden">
+            <div class="minigame-header">
+                <h2 class="minigame-title" id="player-minigame-title">Mini-Gioco!</h2>
+                <p class="minigame-description" id="player-minigame-description">Preparati...</p>
+                <div class="minigame-timer" id="player-minigame-timer">6</div>
+            </div>
+
+            <div class="minigame-buttons" id="minigame-buttons">
+                <!-- Buttons will be generated based on mini-game type -->
+            </div>
+
+            <div class="minigame-answered hidden" id="minigame-answered">
+                <div class="answered-text">Risposta inviata!</div>
+                <div class="waiting-text">In attesa degli altri...</div>
+            </div>
+        </div>
+
+        <!-- Mini-Game Result Screen -->
+        <div id="minigame-result-screen" class="hidden">
+            <div class="minigame-result-content">
+                <h2 class="result-rank" id="player-result-rank">#1</h2>
+                <div class="result-correct" id="player-result-correct">✅</div>
+                <div class="result-bonus" id="player-result-bonus">+30% danni</div>
+            </div>
+        </div>
+
+        <!-- Battle Screen -->
+        <div id="battle-screen" class="hidden">
+            <div class="battle-header">
+                <div class="your-hp">
+                    <span class="hp-label">HP</span>
+                    <div class="hp-bar">
+                        <div class="hp-fill" id="hp-fill" style="width: 100%"></div>
+                    </div>
+                    <span class="hp-value" id="hp-value">100</span>
+                </div>
+                <div class="turn-timer" id="battle-timer">10</div>
+                <div class="your-focus">
+                    <span class="focus-label">Focus</span>
+                    <div class="focus-dots" id="focus-dots">
+                        <span class="focus-dot"></span>
+                        <span class="focus-dot"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="target-indicator" id="target-indicator">
+                <div class="neighbors">
+                    <div class="neighbor left" id="neighbor-left">
+                        <span class="neighbor-avatar">?</span>
+                        <span class="neighbor-name">---</span>
+                        <span class="neighbor-element">?</span>
+                    </div>
+                    <div class="you-indicator">TU</div>
+                    <div class="neighbor right" id="neighbor-right">
+                        <span class="neighbor-avatar">?</span>
+                        <span class="neighbor-name">---</span>
+                        <span class="neighbor-element">?</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons" id="action-buttons">
+                <button class="action-btn attack-left" data-action="attack-left">
+                    <span class="action-icon">⚔️←</span>
+                    <span class="action-name">Attacca SX</span>
+                </button>
+                <button class="action-btn attack-right" data-action="attack-right">
+                    <span class="action-icon">→⚔️</span>
+                    <span class="action-name">Attacca DX</span>
+                </button>
+                <button class="action-btn defend" data-action="defend">
+                    <span class="action-icon">🛡️</span>
+                    <span class="action-name">Difesa</span>
+                </button>
+                <button class="action-btn focus" data-action="focus">
+                    <span class="action-icon">✨</span>
+                    <span class="action-name">Focus</span>
+                </button>
+            </div>
+
+            <div class="special-actions hidden" id="special-actions">
+                <h4>Poteri Speciali (richiede 3 focus)</h4>
+                <div class="special-buttons">
+                    <button class="special-btn" data-special="double-attack" disabled>
+                        <span class="special-icon">⚡</span>
+                        <span class="special-name">Doppio Attacco</span>
+                    </button>
+                    <button class="special-btn" data-special="mega-defense" disabled>
+                        <span class="special-icon">🏰</span>
+                        <span class="special-name">Mega Difesa</span>
+                    </button>
+                    <button class="special-btn" data-special="heal" disabled>
+                        <span class="special-icon">💚</span>
+                        <span class="special-name">Cura</span>
+                    </button>
+                    <button class="special-btn" data-special="counter" disabled>
+                        <span class="special-icon">🔄</span>
+                        <span class="special-name">Contrattacco</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="action-selected hidden" id="action-selected">
+                <div class="selected-action" id="selected-action-text">Difesa</div>
+                <div class="waiting-text">In attesa degli altri...</div>
+            </div>
+        </div>
+
+        <!-- Resolution Screen -->
+        <div id="resolution-screen" class="hidden">
+            <div class="resolution-result" id="resolution-result">
+                <!-- Shows what happened to you -->
+            </div>
+            <div class="hp-change" id="hp-change">
+                <!-- Shows HP change -->
+            </div>
+        </div>
+
+        <!-- Spectator Screen (when eliminated) -->
+        <div id="spectator-screen" class="hidden">
+            <div class="eliminated-banner">
+                <span class="skull">💀</span>
+                <span class="text">ELIMINATO</span>
+            </div>
+            <div class="spectator-info">
+                <p>Guarda la battaglia sulla TV!</p>
+                <p class="players-remaining">Giocatori rimasti: <span id="players-remaining">0</span></p>
+            </div>
+        </div>
+
+        <!-- Winner Screen -->
+        <div id="winner-screen" class="hidden">
+            <div class="winner-result" id="winner-result">
+                <!-- VITTORIA or position -->
+            </div>
+            <div class="final-stats" id="player-final-stats">
+                <!-- Stats -->
+            </div>
+            <button id="btn-play-again" class="btn btn-fire">GIOCA ANCORA</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/elemental-player.js?v=1"></script>
+</body>
+</html>

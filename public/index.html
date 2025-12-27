@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Games Arena</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .home-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .home-title {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .home-subtitle {
+            color: var(--gray);
+            font-size: 1.2rem;
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .game-card.quiz {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+        }
+
+        .game-card.quiz:hover {
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+            border-color: var(--primary);
+        }
+
+        .game-card.elemental {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(59, 130, 246, 0.15) 50%, rgba(34, 197, 94, 0.15) 100%);
+        }
+
+        .game-card.elemental:hover {
+            box-shadow: 0 20px 60px rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+        }
+
+        .game-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .game-name {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--light);
+            margin-bottom: 15px;
+        }
+
+        .game-desc {
+            color: var(--gray);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .game-tag {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .game-card.quiz .game-tag {
+            background: var(--primary);
+            color: white;
+        }
+
+        .game-card.elemental .game-tag {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--gray);
+            border: 1px solid var(--gray);
+        }
+
+        .game-card.elemental .game-tag {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: white;
+        }
+
+        .game-card.racers {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.2) 0%, rgba(241, 196, 15, 0.2) 100%);
+        }
+
+        .game-card.racers:hover {
+            box-shadow: 0 20px 60px rgba(231, 76, 60, 0.3);
+            border-color: #e74c3c;
+        }
+
+        .game-card.racers .game-tag {
+            background: linear-gradient(135deg, #e74c3c, #f1c40f);
+            color: white;
+        }
+
+        .powerups-preview {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .powerup-icon {
+            font-size: 1.5rem;
+            opacity: 0.8;
+        }
+
+        .elements-preview {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .element-icon {
+            font-size: 1.5rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 700px) {
+            .home-title {
+                font-size: 2rem;
+            }
+
+            .home-subtitle {
+                font-size: 1rem;
+                margin-bottom: 40px;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .game-card {
+                padding: 30px 20px;
+            }
+
+            .game-icon {
+                font-size: 3rem;
+            }
+
+            .game-name {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="home-container">
+        <h1 class="home-title">Party Games Arena</h1>
+        <p class="home-subtitle">Scegli un gioco e sfida i tuoi amici!</p>
+
+        <div class="games-grid">
+            <!-- QuizPartyWar -->
+            <a href="/quiz-home.html" class="game-card quiz">
+                <span class="game-icon">🧠</span>
+                <h2 class="game-name">QuizPartyWar</h2>
+                <p class="game-desc">
+                    Il party game a quiz! Rispondi alle domande, usa i poteri speciali
+                    e sfida i tuoi amici in tempo reale.
+                </p>
+                <span class="game-tag">Gioca Ora</span>
+            </a>
+
+            <!-- Elemental Clash -->
+            <a href="/elemental-home.html" class="game-card elemental">
+                <span class="game-icon">🔥</span>
+                <h2 class="game-name">Elemental Clash</h2>
+                <p class="game-desc">
+                    Arena di battaglia elementale! Scegli il tuo elemento,
+                    combatti altri giocatori e conquista l'arena.
+                </p>
+                <div class="elements-preview">
+                    <span class="element-icon" title="Fuoco">🔥</span>
+                    <span class="element-icon" title="Acqua">💧</span>
+                    <span class="element-icon" title="Terra">🌍</span>
+                    <span class="element-icon" title="Aria">💨</span>
+                </div>
+                <span class="game-tag">Gioca Ora</span>
+            </a>
+
+            <!-- Micro Racers -->
+            <a href="/racers-home.html" class="game-card racers">
+                <span class="game-icon">🏎️</span>
+                <h2 class="game-name">Micro Racers</h2>
+                <p class="game-desc">
+                    Corsa adrenalinica! Inclina il telefono per sterzare,
+                    raccogli power-up e taglia il traguardo per primo!
+                </p>
+                <div class="powerups-preview">
+                    <span class="powerup-icon" title="Turbo">🚀</span>
+                    <span class="powerup-icon" title="Olio">🛢️</span>
+                    <span class="powerup-icon" title="Missile">🎯</span>
+                </div>
+                <span class="game-tag">Gioca Ora</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

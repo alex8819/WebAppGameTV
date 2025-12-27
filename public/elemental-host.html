@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Elemental Clash - Arena</title>
+    <link rel="stylesheet" href="/css/common.css?v=1">
+    <link rel="stylesheet" href="/css/elemental-host.css?v=1">
+</head>
+<body>
+    <div class="arena-container">
+        <!-- Lobby Screen -->
+        <div id="lobby-screen">
+            <h1 class="arena-title">Elemental Clash</h1>
+            <div class="pin-display">
+                <div class="pin-label">Entra e inserisci il PIN:</div>
+                <div class="pin-code" id="game-pin">----</div>
+            </div>
+
+            <div class="players-circle" id="players-circle">
+                <!-- Players will appear in a circle here -->
+            </div>
+
+            <div class="lobby-info">
+                <span class="player-count">Giocatori: <span id="player-count">0</span>/8</span>
+            </div>
+
+            <div class="lobby-actions">
+                <div class="auto-start-countdown" id="auto-start-countdown">
+                    Partita automatica in <span id="countdown-timer">60</span>s
+                </div>
+                <button id="btn-start-game" class="btn btn-fire" disabled>INIZIA BATTAGLIA</button>
+            </div>
+        </div>
+
+        <!-- Mini-Game Screen -->
+        <div id="minigame-screen" class="hidden">
+            <div class="minigame-header">
+                <div class="round-badge">Round <span id="minigame-round">1</span></div>
+                <div class="minigame-timer-container">
+                    <div class="minigame-timer" id="minigame-timer">6</div>
+                </div>
+            </div>
+            <div class="minigame-content">
+                <h2 class="minigame-title" id="minigame-title">Mini-Gioco!</h2>
+                <p class="minigame-description" id="minigame-description">Preparati...</p>
+                <div class="minigame-display" id="minigame-display">
+                    <!-- Mini-game specific content -->
+                </div>
+            </div>
+            <div class="minigame-players" id="minigame-players">
+                <!-- Shows who has answered -->
+            </div>
+        </div>
+
+        <!-- Mini-Game Results Screen -->
+        <div id="minigame-results-screen" class="hidden">
+            <div class="minigame-results-header">
+                <h2 class="results-title" id="minigame-results-title">Risultati</h2>
+                <div class="correct-answer" id="correct-answer-display"></div>
+            </div>
+            <div class="minigame-rankings" id="minigame-rankings">
+                <!-- Rankings will appear here -->
+            </div>
+        </div>
+
+        <!-- Battle Screen -->
+        <div id="battle-screen" class="hidden">
+            <div class="battle-header">
+                <div class="match-timer">
+                    <span class="timer-icon">⏱️</span>
+                    <span class="timer-value" id="match-timer">10:00</span>
+                </div>
+                <div class="round-info">
+                    Round <span id="round-number">1</span>
+                </div>
+                <div class="turn-timer">
+                    Azione: <span id="turn-timer">10</span>s
+                </div>
+            </div>
+
+            <div class="arena" id="arena">
+                <!-- Players positioned in circle, arena in center -->
+                <div class="arena-center">
+                    <div class="element-cycle">
+                        <span class="element fire">🔥</span>
+                        <span class="beats">→</span>
+                        <span class="element air">💨</span>
+                        <span class="beats">→</span>
+                        <span class="element earth">🌍</span>
+                        <span class="beats">→</span>
+                        <span class="element water">💧</span>
+                        <span class="beats">→</span>
+                        <span class="element fire">🔥</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="battle-log" id="battle-log">
+                <!-- Battle events appear here -->
+            </div>
+        </div>
+
+        <!-- Action Resolution Screen -->
+        <div id="resolution-screen" class="hidden">
+            <h2 class="resolution-title">Risoluzione Azioni</h2>
+            <div class="actions-display" id="actions-display">
+                <!-- Shows what each player did -->
+            </div>
+            <div class="damage-results" id="damage-results">
+                <!-- Shows damage dealt -->
+            </div>
+        </div>
+
+        <!-- Final Screen -->
+        <div id="final-screen" class="hidden">
+            <h1 class="winner-title">🏆 VINCITORE 🏆</h1>
+            <div class="winner-display" id="winner-display">
+                <!-- Winner info -->
+            </div>
+            <div class="final-stats" id="final-stats">
+                <!-- Final stats -->
+            </div>
+            <div class="final-countdown">
+                Nuova partita tra <span id="final-countdown-timer">30</span>s
+            </div>
+            <button id="btn-new-game" class="btn btn-fire">NUOVA PARTITA</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/elemental-host.js?v=1"></script>
+</body>
+</html>

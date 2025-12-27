@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Micro Racers - Pista</title>
+    <link rel="stylesheet" href="/css/common.css?v=1">
+    <link rel="stylesheet" href="/css/racers-host.css?v=1">
+</head>
+<body>
+    <div class="race-container">
+        <!-- Lobby Screen -->
+        <div id="lobby-screen">
+            <h1 class="race-title">🏎️ Micro Racers</h1>
+            <div class="pin-display">
+                <div class="pin-label">Entra e inserisci il PIN:</div>
+                <div class="pin-code" id="game-pin">----</div>
+            </div>
+
+            <div class="players-grid" id="players-grid">
+                <!-- Players will appear here -->
+            </div>
+
+            <div class="lobby-info">
+                <span class="player-count">Piloti: <span id="player-count">0</span>/8</span>
+            </div>
+
+            <div class="lobby-actions">
+                <button id="btn-start-race" class="btn btn-race" disabled>AVVIA GARA</button>
+            </div>
+        </div>
+
+        <!-- Countdown Screen -->
+        <div id="countdown-screen" class="hidden">
+            <div class="countdown-display" id="countdown-display">3</div>
+        </div>
+
+        <!-- Race Screen -->
+        <div id="race-screen" class="hidden">
+            <div class="race-header">
+                <div class="race-time">
+                    <span class="timer-icon">⏱️</span>
+                    <span class="timer-value" id="race-timer">00:00</span>
+                </div>
+                <div class="lap-info">
+                    Giro <span id="current-lap">1</span>/<span id="total-laps">3</span>
+                </div>
+            </div>
+
+            <div class="track-container">
+                <canvas id="race-canvas" width="800" height="600"></canvas>
+            </div>
+
+            <div class="race-standings" id="race-standings">
+                <!-- Live standings -->
+            </div>
+
+            <div class="powerup-notifications" id="powerup-notifications">
+                <!-- Powerup usage notifications -->
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden">
+            <h1 class="results-title">🏁 CLASSIFICA FINALE 🏁</h1>
+            <div class="podium" id="podium">
+                <!-- Top 3 -->
+            </div>
+            <div class="full-results" id="full-results">
+                <!-- All results -->
+            </div>
+            <div class="results-countdown">
+                Nuova gara tra <span id="results-countdown-timer">30</span>s
+            </div>
+            <button id="btn-new-race" class="btn btn-race">NUOVA GARA</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/racers-host.js?v=1"></script>
+</body>
+</html>

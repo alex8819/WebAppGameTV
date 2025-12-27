@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elemental Clash</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .landing .logo {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #ef4444 0%, #3b82f6 33%, #22c55e 66%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .elements-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .landing .tagline {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 50px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .mode-btn {
+            padding: 25px 40px;
+            font-size: 1.3rem;
+            border-radius: 16px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.host {
+            background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+            color: white;
+        }
+
+        .mode-btn.player {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #ef4444;
+            color: var(--light);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(239, 68, 68, 0.3);
+        }
+
+        .mode-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 8px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--light);
+        }
+
+        .game-info {
+            margin-top: 50px;
+            max-width: 500px;
+        }
+
+        .game-info h3 {
+            color: var(--light);
+            margin-bottom: 15px;
+        }
+
+        .element-rules {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .element-rule {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .element-rule .emoji {
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .landing .logo {
+                font-size: 2.2rem;
+            }
+            .mode-btn {
+                padding: 20px 30px;
+                font-size: 1.1rem;
+            }
+            .element-rules {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Torna ai giochi</a>
+
+    <div class="landing">
+        <h1 class="logo">Elemental Clash</h1>
+        <div class="elements-display">
+            <span>🔥</span>
+            <span>💧</span>
+            <span>🌍</span>
+            <span>💨</span>
+        </div>
+        <p class="tagline">Arena di battaglia elementale!</p>
+
+        <div class="mode-buttons">
+            <a href="/elemental-host" class="mode-btn host">
+                OSPITA ARENA
+                <div class="mode-desc">Apri sulla TV per creare l'arena</div>
+            </a>
+            <a href="/elemental-play" class="mode-btn player">
+                ENTRA IN BATTAGLIA
+                <div class="mode-desc">Unisciti con il PIN dal tuo smartphone</div>
+            </a>
+        </div>
+
+        <div class="game-info">
+            <h3>Come funziona</h3>
+            <div class="element-rules">
+                <div class="element-rule">
+                    <span class="emoji">🔥</span> Fuoco batte Aria
+                </div>
+                <div class="element-rule">
+                    <span class="emoji">💧</span> Acqua batte Fuoco
+                </div>
+                <div class="element-rule">
+                    <span class="emoji">🌍</span> Terra batte Acqua
+                </div>
+                <div class="element-rule">
+                    <span class="emoji">💨</span> Aria batte Terra
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

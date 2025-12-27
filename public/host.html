@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>QuizPartyWar - Host</title>
+    <link rel="stylesheet" href="/css/common.css?v=17">
+    <link rel="stylesheet" href="/css/host.css?v=24">
+</head>
+<body>
+    <div class="host-container">
+        <!-- Welcome Screen (hidden - game creates automatically) -->
+        <div id="welcome-screen" class="hidden">
+            <h1 class="logo">QuizPartyWar</h1>
+            <p class="subtitle">Caricamento...</p>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="hidden">
+            <h1 class="lobby-title">QuizPartyWar</h1>
+            <div class="pin-display">
+                <div class="pin-label">Entra su questo sito e inserisci il PIN:</div>
+                <div class="pin-code" id="game-pin">----</div>
+                <div class="pin-url" id="game-url"></div>
+            </div>
+
+            <div class="players-section">
+                <div class="players-header">
+                    <h2>Giocatori in attesa</h2>
+                    <span class="player-count">Collegati: <span id="player-count">0</span></span>
+                </div>
+                <div class="players-grid" id="players-grid"></div>
+            </div>
+
+            <div class="lobby-actions">
+                <div class="auto-start-countdown" id="auto-start-countdown">
+                    Partita automatica in <span id="countdown-timer">45</span>s
+                </div>
+                <button id="btn-start-game" class="btn btn-success" disabled>AVVIA PARTITA</button>
+                <button id="btn-reload-game" class="btn btn-danger">RICARICA</button>
+            </div>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="question-screen" class="hidden">
+            <div class="question-header">
+                <span class="question-number" id="question-number">Domanda 1 / 10</span>
+                <div class="timer-display timer" id="timer">25</div>
+                <span class="answers-progress" id="answers-progress">Risposte: 0/0</span>
+            </div>
+
+            <div class="question-main">
+                <div class="question-text" id="question-text"></div>
+            </div>
+
+            <div class="question-bottom">
+                <div class="bottom-panel">
+                    <div class="active-powers hidden" id="active-powers">
+                        <h3>Poteri Attivi</h3>
+                        <div class="powers-list" id="powers-list"></div>
+                    </div>
+                </div>
+
+                <div class="bottom-panel">
+                    <div class="mini-leaderboard" id="mini-leaderboard">
+                        <h3>Classifica</h3>
+                        <ul class="player-list" id="leaderboard-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden">
+            <div class="results-header">
+                <h2>Risultati</h2>
+                <div class="correct-answer-display" id="correct-answer-display"></div>
+                <div class="powers-waiting" id="powers-waiting">
+                    <span class="waiting-label">In attesa scelta poteri:</span>
+                    <span class="waiting-progress"><span id="powers-ready">0</span>/<span id="powers-total">0</span></span>
+                </div>
+                <div class="results-countdown hidden" id="results-countdown">Prossima domanda in <span id="results-timer">3</span></div>
+            </div>
+
+            <div class="results-list" id="results-list"></div>
+
+            <div class="events-list hidden" id="events-list"></div>
+        </div>
+
+        <!-- Challenge Screen -->
+        <div id="challenge-screen" class="hidden">
+            <div class="challenge-header">
+                <div class="challenge-badge">SFIDA</div>
+                <div class="challenge-vs">
+                    <span class="challenger-name" id="challenger-name">Player1</span>
+                    <span class="vs-text">VS</span>
+                    <span class="target-name" id="target-name">Player2</span>
+                </div>
+                <div class="challenge-stakes">Chi vince raddoppia i punti, chi perde li dimezza!</div>
+            </div>
+
+            <div class="challenge-timer-display timer" id="challenge-timer">15</div>
+
+            <div class="challenge-question" id="challenge-question-text"></div>
+
+            <div class="remaining-challenges hidden" id="remaining-challenges">
+                Altre sfide in coda: <span id="remaining-count">0</span>
+            </div>
+        </div>
+
+        <!-- Challenge Result Screen -->
+        <div id="challenge-result-screen" class="hidden">
+            <div class="challenge-result-header">
+                <div class="challenge-badge">RISULTATO SFIDA</div>
+            </div>
+
+            <div class="challenge-result-content">
+                <div class="challenge-player challenger-result" id="challenger-result">
+                    <div class="challenge-player-name" id="result-challenger-name">Player1</div>
+                    <div class="challenge-player-answer" id="result-challenger-answer">A</div>
+                    <div class="challenge-player-status" id="result-challenger-status">Corretto</div>
+                </div>
+
+                <div class="challenge-winner-display" id="winner-display">
+                    <div class="winner-icon" id="winner-icon"></div>
+                    <div class="winner-text" id="winner-text">Player1 VINCE!</div>
+                </div>
+
+                <div class="challenge-player target-result" id="target-result">
+                    <div class="challenge-player-name" id="result-target-name">Player2</div>
+                    <div class="challenge-player-answer" id="result-target-answer">B</div>
+                    <div class="challenge-player-status" id="result-target-status">Sbagliato</div>
+                </div>
+            </div>
+
+            <div class="challenge-consequence" id="challenge-consequence">
+                Player1: punti x2 | Player2: punti /2
+            </div>
+        </div>
+
+        <!-- Final Screen -->
+        <div id="final-screen" class="hidden">
+            <h1 class="final-title">🏆 Classifica Finale 🏆</h1>
+
+            <div class="podium" id="podium"></div>
+
+            <div class="final-countdown">
+                <p>Nuova partita tra <span id="final-countdown-timer">60</span> secondi...</p>
+            </div>
+
+            <div class="final-actions">
+                <button id="btn-new-game" class="btn btn-primary">NUOVA PARTITA ORA</button>
+            </div>
+        </div>
+
+        <!-- Reactions Container -->
+        <div class="reactions-container" id="reactions-container"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/host.js?v=26"></script>
+</body>
+</html>

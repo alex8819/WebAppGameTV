@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Micro Racers - Controller</title>
+    <link rel="stylesheet" href="/css/common.css?v=1">
+    <link rel="stylesheet" href="/css/racers-player.css?v=1">
+</head>
+<body>
+    <div class="controller-container">
+        <!-- Join Screen -->
+        <div id="join-screen">
+            <h1 class="game-title">🏎️ Micro Racers</h1>
+
+            <div class="join-form">
+                <div class="input-group">
+                    <label for="game-pin">PIN Gara</label>
+                    <input type="text" id="game-pin" maxlength="4" placeholder="----" inputmode="numeric">
+                </div>
+
+                <div class="input-group">
+                    <label for="nickname">Il tuo nome</label>
+                    <input type="text" id="nickname" maxlength="12" placeholder="Pilota">
+                </div>
+
+                <button id="btn-join" class="btn btn-race">ENTRA IN GARA</button>
+                <div class="error-message" id="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="hidden">
+            <div class="lobby-header">
+                <h2>In attesa...</h2>
+                <div class="pin-display">PIN: <span id="display-pin">----</span></div>
+            </div>
+
+            <div class="your-car">
+                <div class="car-preview" id="car-preview">🏎️</div>
+                <div class="player-name" id="player-name">---</div>
+            </div>
+
+            <div class="players-list" id="players-list">
+                <!-- Other players -->
+            </div>
+
+            <div class="waiting-message">
+                Attendi che l'host avvii la gara...
+            </div>
+        </div>
+
+        <!-- Countdown Screen -->
+        <div id="countdown-screen" class="hidden">
+            <div class="countdown-number" id="countdown-number">3</div>
+            <div class="tilt-hint">Inclina il telefono per sterzare!</div>
+        </div>
+
+        <!-- Race Controls Screen -->
+        <div id="race-screen" class="hidden">
+            <div class="race-hud">
+                <div class="hud-item">
+                    <div class="hud-label">Giro</div>
+                    <div class="hud-value"><span id="current-lap">1</span>/<span id="total-laps">3</span></div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-label">Posizione</div>
+                    <div class="hud-value" id="position">-</div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-label">Velocità</div>
+                    <div class="hud-value" id="speed">0</div>
+                </div>
+            </div>
+
+            <div class="steering-indicator">
+                <div class="steering-bar">
+                    <div class="steering-marker" id="steering-marker"></div>
+                </div>
+                <div class="steering-labels">
+                    <span>⬅️</span>
+                    <span>➡️</span>
+                </div>
+            </div>
+
+            <div class="powerup-slot" id="powerup-slot">
+                <!-- Current powerup -->
+            </div>
+
+            <div class="controls-area">
+                <button class="brake-pedal" id="brake-pedal">
+                    <span class="pedal-icon">🛑</span>
+                    <span class="pedal-label">FRENO</span>
+                </button>
+
+                <button class="gas-pedal" id="gas-pedal">
+                    <span class="pedal-icon">⚡</span>
+                    <span class="pedal-label">GAS</span>
+                </button>
+            </div>
+
+            <div class="status-effects" id="status-effects">
+                <!-- Effect indicators -->
+            </div>
+        </div>
+
+        <!-- Finished Screen -->
+        <div id="finished-screen" class="hidden">
+            <div class="finish-message" id="finish-message">
+                <div class="finish-position" id="finish-position">1°</div>
+                <div class="finish-text">TRAGUARDO!</div>
+            </div>
+            <div class="finish-time" id="finish-time">0:00.00</div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden">
+            <h2 class="results-title">Risultati</h2>
+            <div class="your-result" id="your-result">
+                <!-- Your position and stats -->
+            </div>
+            <div class="top-three" id="top-three">
+                <!-- Top 3 -->
+            </div>
+            <button id="btn-play-again" class="btn btn-race">GIOCA ANCORA</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/racers-player.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizPartyWar</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .landing .logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .landing .tagline {
+            font-size: 1.3rem;
+            color: var(--gray);
+            margin-bottom: 50px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .mode-btn {
+            padding: 25px 40px;
+            font-size: 1.3rem;
+            border-radius: 16px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.host {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .mode-btn.player {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--primary);
+            color: var(--light);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.3);
+        }
+
+        .mode-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 8px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--light);
+        }
+
+        .instructions {
+            margin-top: 60px;
+            color: var(--gray);
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 600px) {
+            .landing .logo {
+                font-size: 2.5rem;
+            }
+            .mode-btn {
+                padding: 20px 30px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Torna ai giochi</a>
+
+    <div class="landing">
+        <h1 class="logo">QuizPartyWar</h1>
+        <p class="tagline">Il party game a quiz per sfidare i tuoi amici!</p>
+
+        <div class="mode-buttons">
+            <a href="/host" class="mode-btn host">
+                OSPITA PARTITA
+                <div class="mode-desc">Apri sulla TV per creare una partita</div>
+            </a>
+            <a href="/play" class="mode-btn player">
+                GIOCA
+                <div class="mode-desc">Entra con il PIN dal tuo smartphone</div>
+            </a>
+        </div>
+
+        <div class="instructions">
+            <p>1. L'host crea la partita sulla TV</p>
+            <p>2. I giocatori entrano con il PIN dal telefono</p>
+            <p>3. 10 domande, rispondi veloce per più punti!</p>
+        </div>
+    </div>
+</body>
+</html>

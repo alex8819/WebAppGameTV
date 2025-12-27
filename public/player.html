@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>QuizPartyWar - Gioca</title>
+    <link rel="stylesheet" href="/css/common.css?v=8">
+    <link rel="stylesheet" href="/css/player.css?v=14">
+</head>
+<body>
+    <div class="player-container">
+        <!-- Exit Button (visible during game) -->
+        <button class="exit-btn hidden" id="exit-btn" title="Esci dalla partita">✕</button>
+        <div class="exit-status hidden" id="exit-status">
+            <span id="exit-count">0</span>/<span id="exit-total">0</span> vogliono uscire
+        </div>
+
+        <!-- Join Screen -->
+        <div id="join-screen">
+            <h1 class="logo">QuizPartyWar</h1>
+
+            <div class="join-form">
+                <div class="form-group">
+                    <label for="pin-input">PIN Partita</label>
+                    <input type="text" id="pin-input" placeholder="Es: 4827" maxlength="4" inputmode="numeric" pattern="[0-9]*">
+                </div>
+
+                <div class="form-group">
+                    <label for="nickname-input">Il tuo nickname</label>
+                    <input type="text" id="nickname-input" placeholder="Es: SuperMario" maxlength="15">
+                </div>
+
+                <div class="form-group">
+                    <label>Scegli il tuo animaletto</label>
+                    <div class="animal-selector" id="animal-selector">
+                        <button type="button" class="animal-btn" data-animal="🐶">🐶</button>
+                        <button type="button" class="animal-btn" data-animal="🐱">🐱</button>
+                        <button type="button" class="animal-btn" data-animal="🐻">🐻</button>
+                        <button type="button" class="animal-btn" data-animal="🐼">🐼</button>
+                        <button type="button" class="animal-btn" data-animal="🐵">🐵</button>
+                        <button type="button" class="animal-btn" data-animal="🦁">🦁</button>
+                        <button type="button" class="animal-btn" data-animal="🐸">🐸</button>
+                    </div>
+                </div>
+
+                <button id="btn-join" class="btn btn-primary" style="width: 100%">ENTRA</button>
+
+                <div class="error-message hidden" id="join-error"></div>
+            </div>
+        </div>
+
+        <!-- Player Lobby -->
+        <div id="player-lobby" class="hidden">
+            <div class="lobby-header">
+                <h2>Lobby</h2>
+                <div class="lobby-pin">PIN: <span id="lobby-pin-display">----</span></div>
+                <p class="waiting-text">In attesa che l'host avvii la partita...</p>
+            </div>
+
+            <div class="players-in-lobby">
+                <h3>Giocatori (<span id="lobby-player-count">0</span>)</h3>
+                <ul class="player-list" id="lobby-players-list"></ul>
+            </div>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="player-question" class="hidden">
+            <div class="question-info">
+                <span class="question-num" id="p-question-num">1/10</span>
+                <span class="mobile-timer" id="p-timer">15</span>
+            </div>
+
+            <div class="mobile-question-text" id="p-question-text"></div>
+
+            <div class="answer-buttons" id="answer-buttons">
+                <button class="answer-btn a" data-answer="A">
+                    <span class="letter">A</span>
+                    <span class="text" id="p-option-a"></span>
+                </button>
+                <button class="answer-btn b" data-answer="B">
+                    <span class="letter">B</span>
+                    <span class="text" id="p-option-b"></span>
+                </button>
+                <button class="answer-btn c" data-answer="C">
+                    <span class="letter">C</span>
+                    <span class="text" id="p-option-c"></span>
+                </button>
+                <button class="answer-btn d" data-answer="D">
+                    <span class="letter">D</span>
+                    <span class="text" id="p-option-d"></span>
+                </button>
+            </div>
+
+            <!-- Status dei poteri attivi durante la domanda -->
+            <div class="powers-status hidden" id="powers-status">
+                <div class="power-active hidden" id="power-active-status"></div>
+                <div class="power-suffering hidden" id="power-suffering-status"></div>
+            </div>
+
+            <div class="answer-sent hidden" id="answer-sent">
+                Risposta inviata! Attendi i risultati...
+            </div>
+        </div>
+
+        <!-- Challenge Screen -->
+        <div id="player-challenge" class="hidden">
+            <div class="challenge-mobile-header">
+                <div class="challenge-mobile-badge">SFIDA</div>
+                <div class="challenge-mobile-vs">
+                    VS <span id="challenge-opponent"></span>
+                </div>
+                <div class="challenge-mobile-timer" id="challenge-mobile-timer">15</div>
+            </div>
+
+            <div class="challenge-mobile-question" id="challenge-mobile-question"></div>
+
+            <div class="challenge-answer-buttons" id="challenge-answer-buttons">
+                <button class="answer-btn a" data-answer="A">
+                    <span class="letter">A</span>
+                    <span class="text" id="challenge-option-a"></span>
+                </button>
+                <button class="answer-btn b" data-answer="B">
+                    <span class="letter">B</span>
+                    <span class="text" id="challenge-option-b"></span>
+                </button>
+                <button class="answer-btn c" data-answer="C">
+                    <span class="letter">C</span>
+                    <span class="text" id="challenge-option-c"></span>
+                </button>
+                <button class="answer-btn d" data-answer="D">
+                    <span class="letter">D</span>
+                    <span class="text" id="challenge-option-d"></span>
+                </button>
+            </div>
+
+            <div class="challenge-sent hidden" id="challenge-sent">
+                Risposta inviata! Attendi il risultato...
+            </div>
+
+            <div class="challenge-stakes-info">
+                Vinci = punti x2 | Perdi = punti /2
+            </div>
+        </div>
+
+        <!-- Challenge Result Screen -->
+        <div id="player-challenge-result" class="hidden">
+            <div class="challenge-result-mobile">
+                <div class="challenge-result-icon" id="challenge-result-icon"></div>
+                <div class="challenge-result-text" id="challenge-result-text"></div>
+                <div class="challenge-new-score">Nuovo punteggio: <span id="challenge-new-score">0</span></div>
+            </div>
+        </div>
+
+        <!-- Watching Challenge Screen -->
+        <div id="player-watching" class="hidden">
+            <div class="watching-content">
+                <div class="watching-badge">SFIDA IN CORSO</div>
+                <div class="watching-players">
+                    <span id="watching-challenger"></span>
+                    <span class="watching-vs">VS</span>
+                    <span id="watching-target"></span>
+                </div>
+                <div class="watching-text">Guarda la TV!</div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="player-result" class="hidden">
+            <div class="result-icon" id="result-icon"></div>
+            <div class="result-text" id="result-text"></div>
+            <div class="points-earned" id="points-earned">+0</div>
+            <div class="total-score">Punteggio totale: <span id="total-score">0</span></div>
+            <div class="ability-effect hidden" id="ability-effect"></div>
+
+            <div class="abilities-section" id="abilities-section">
+                <h4>Scegli un potere per la prossima domanda</h4>
+                <div class="abilities-grid abilities-grid-7">
+                    <button class="ability-btn steal" id="ability-steal" data-ability="steal">
+                        RUBA
+                    </button>
+                    <button class="ability-btn double" id="ability-double" data-ability="double">
+                        DOPPIO
+                    </button>
+                    <button class="ability-btn block" id="ability-block" data-ability="block">
+                        BLOCCA
+                    </button>
+                    <button class="ability-btn challenge" id="ability-challenge" data-ability="challenge">
+                        SFIDA
+                    </button>
+                    <button class="ability-btn shuffle" id="ability-shuffle" data-ability="shuffle">
+                        SHUFFLE
+                    </button>
+                    <button class="ability-btn obfuscate" id="ability-obfuscate" data-ability="obfuscate">
+                        OFFUSCA
+                    </button>
+                    <button class="ability-btn halve" id="ability-halve" data-ability="halve">
+                        DIMEZZA
+                    </button>
+                </div>
+                <button class="btn-pass" id="btn-pass">PASSA (nessun potere)</button>
+            </div>
+
+            <div class="waiting-powers hidden" id="waiting-powers">
+                <div class="waiting-icon">⏳</div>
+                <div class="waiting-text">In attesa degli altri giocatori...</div>
+                <div class="waiting-count"><span id="powers-ready-count">0</span>/<span id="powers-total-count">0</span> pronti</div>
+            </div>
+
+            <div class="reactions-bar">
+                <button class="reaction-btn" data-emoji="🐶">🐶</button>
+                <button class="reaction-btn" data-emoji="🐱">🐱</button>
+                <button class="reaction-btn" data-emoji="🐻">🐻</button>
+                <button class="reaction-btn" data-emoji="🐼">🐼</button>
+                <button class="reaction-btn" data-emoji="🐵">🐵</button>
+                <button class="reaction-btn" data-emoji="🦁">🦁</button>
+                <button class="reaction-btn" data-emoji="🐸">🐸</button>
+            </div>
+        </div>
+
+        <!-- Final Screen -->
+        <div id="player-final" class="hidden">
+            <div class="your-rank-label">La tua posizione</div>
+            <div class="your-rank" id="your-rank">#1</div>
+            <div class="your-final-score" id="your-final-score">0 punti</div>
+
+            <div class="top-three" id="top-three">
+                <h4>Top 3</h4>
+            </div>
+
+            <button id="btn-back-home" class="btn btn-primary">TORNA ALLA HOME</button>
+
+            <div class="reactions-bar">
+                <button class="reaction-btn" data-emoji="🐶">🐶</button>
+                <button class="reaction-btn" data-emoji="🐱">🐱</button>
+                <button class="reaction-btn" data-emoji="🐻">🐻</button>
+                <button class="reaction-btn" data-emoji="🐼">🐼</button>
+                <button class="reaction-btn" data-emoji="🐵">🐵</button>
+                <button class="reaction-btn" data-emoji="🦁">🦁</button>
+                <button class="reaction-btn" data-emoji="🐸">🐸</button>
+            </div>
+        </div>
+
+        <!-- Target Selection Modal -->
+        <div class="modal-overlay hidden" id="target-modal">
+            <div class="modal-content">
+                <h3>Scegli un bersaglio</h3>
+                <ul class="target-list" id="target-list"></ul>
+                <button class="modal-cancel" id="modal-cancel">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/player.js?v=23"></script>
+</body>
+</html>
