@@ -483,7 +483,7 @@ function showShuffledNotification(byPlayer) {
     notification.innerHTML = `
         <div class="shuffled-icon">🔀</div>
         <div class="shuffled-text">${byPlayer ? `<strong>${byPlayer}</strong> ti ha shufflato!` : 'I tuoi tasti verranno mescolati!'}</div>
-        <div class="shuffled-subtext">I tasti cambieranno ogni 4 secondi</div>
+        <div class="shuffled-subtext">I tasti cambieranno ogni 3 secondi</div>
     `;
     document.body.appendChild(notification);
 
@@ -502,7 +502,7 @@ function startShuffleEffect() {
         shuffleAnswerButtons();
     }, 1000);
 
-    // Poi ogni 4 secondi
+    // Poi ogni 3 secondi
     shuffleInterval = setInterval(() => {
         if (!hasAnswered) {
             shuffleAnswerButtons();
@@ -510,7 +510,7 @@ function startShuffleEffect() {
             clearInterval(shuffleInterval);
             shuffleInterval = null;
         }
-    }, 4000);
+    }, 3000);
 }
 
 function shuffleAnswerButtons() {
@@ -577,7 +577,7 @@ function showObfuscatedNotification(byPlayer) {
     notification.innerHTML = `
         <div class="obfuscated-icon">🌫️</div>
         <div class="obfuscated-text">${byPlayer ? `<strong>${byPlayer}</strong> ti ha offuscato!` : 'Sei stato offuscato!'}</div>
-        <div class="obfuscated-subtext">Vedrai la domanda solo negli ultimi 7 secondi</div>
+        <div class="obfuscated-subtext">Vedrai la domanda solo negli ultimi 4 secondi</div>
     `;
     document.body.appendChild(notification);
 
@@ -593,8 +593,8 @@ let obfuscationInterval = null;
 let obfuscationOverlayEl = null;
 
 function applyObfuscation() {
-    // Durata fissa: 20 secondi
-    const OBFUSCATION_DURATION = 20;
+    // Durata fissa: 21 secondi (si rivela negli ultimi 4 secondi su 25)
+    const OBFUSCATION_DURATION = 21;
 
     // Rimuovi overlay esistente se presente
     if (obfuscationOverlayEl) {

@@ -1,4 +1,5 @@
-const { queries, generateUniquePin } = require('./db');
+const { queries, generateUniquePin, getSmartRandomQuestions } = require('./db');
+const logger = require('./logger');
 
 const BASE_POINTS = 10;
 const TIME_LIMIT = 25000; // 25 secondi per le domande
@@ -47,6 +48,7 @@ class GameManager {
         };
 
         this.games.set(pin, gameState);
+        logger.quiz.gameCreated(pin, hostSocketId);
         return { pin, gameId };
     }
 
@@ -97,14 +99,37 @@ class GameManager {
         const dbPlayer = queries.getPlayerByNickname.get(game.id, nickname);
         if (!dbPlayer) return { error: 'Giocatore non trovato' };
 
-        // Trova e rimuovi vecchio socket se esiste
-        for (const [oldSocketId, player] of game.players) {
-            if (player.odId === dbPlayer.id) {
-                game.players.delete(oldSocketId);
+        // Trova il giocatore esistente (potrebbe essere ancora in game.players con vecchio socket)
+        let existingPlayerData = null;
+        let oldSocketId = null;
+
+        for (const [sid, player] of game.players) {
+            if (player.odId === dbPlayer.id || player.nickname === nickname) {
+                existingPlayerData = player;
+                oldSocketId = sid;
                 break;
             }
         }
 
+        // Se trovato con vecchio socket, sposta al nuovo socket mantenendo lo stato
+        if (existingPlayerData && oldSocketId) {
+            game.players.delete(oldSocketId);
+            // Rimuovi il flag di disconnessione
+            delete existingPlayerData.disconnectedAt;
+            game.players.set(socketId, existingPlayerData);
+
+            logger.quiz.error(pin, 'RECONNECT', 'Giocatore riconnesso con stato preservato', {
+                nickname,
+                oldSocketId,
+                newSocketId: socketId,
+                score: existingPlayerData.score
+            });
+
+            queries.setPlayerConnected.run(1, dbPlayer.id);
+            return { success: true, player: existingPlayerData, gameStatus: game.status };
+        }
+
+        // Altrimenti crea nuovo player data dal database
         queries.setPlayerConnected.run(1, dbPlayer.id);
         const playerData = {
             odId: dbPlayer.id,
@@ -114,6 +139,13 @@ class GameManager {
         };
 
         game.players.set(socketId, playerData);
+
+        logger.quiz.error(pin, 'RECONNECT', 'Giocatore riconnesso da database', {
+            nickname,
+            newSocketId: socketId,
+            score: playerData.score
+        });
+
         return { success: true, player: playerData, gameStatus: game.status };
     }
 
@@ -121,15 +153,51 @@ class GameManager {
         for (const [pin, game] of this.games) {
             if (game.players.has(socketId)) {
                 const player = game.players.get(socketId);
+
+                // Durante una partita attiva, NON rimuovere subito il giocatore
+                // Questo permette riconnessioni rapide senza perdere lo stato
+                if (game.status === 'playing') {
+                    // Segna come disconnesso ma mantieni nel gioco
+                    player.disconnectedAt = Date.now();
+                    queries.setPlayerConnected.run(0, player.odId);
+                    logger.quiz.playerDisconnected(pin, player.nickname, false);
+                    logger.quiz.error(pin, 'DISCONNECT_GRACE', 'Giocatore disconnesso durante partita - mantenuto per riconnessione', {
+                        nickname: player.nickname,
+                        socketId
+                    });
+                    // NON eliminare da game.players - permetti riconnessione
+                    return { pin, player, isHost: false, gracePeriod: true };
+                }
+
+                // In lobby: rimuovi normalmente
                 queries.setPlayerConnected.run(0, player.odId);
                 game.players.delete(socketId);
+                logger.quiz.playerDisconnected(pin, player.nickname, false);
                 return { pin, player, isHost: false };
             }
             if (game.hostSocketId === socketId) {
+                logger.quiz.playerDisconnected(pin, 'HOST', true);
                 return { pin, isHost: true };
             }
         }
         return null;
+    }
+
+    // Metodo per rimuovere giocatori disconnessi da troppo tempo (chiamare periodicamente)
+    cleanupDisconnectedPlayers(pin, maxDisconnectTime = 60000) {
+        const game = this.games.get(pin);
+        if (!game) return;
+
+        const now = Date.now();
+        for (const [socketId, player] of game.players) {
+            if (player.disconnectedAt && (now - player.disconnectedAt) > maxDisconnectTime) {
+                game.players.delete(socketId);
+                logger.quiz.error(pin, 'CLEANUP', 'Giocatore rimosso dopo timeout disconnessione', {
+                    nickname: player.nickname,
+                    disconnectedFor: now - player.disconnectedAt
+                });
+            }
+        }
     }
 
     startGame(pin) {
@@ -137,11 +205,15 @@ class GameManager {
         if (!game) return { error: 'Partita non trovata' };
         if (game.players.size < 1) return { error: 'Servono almeno 1 giocatore' };
 
-        // Carica 10 domande random + extra per le sfide
-        game.questions = queries.getRandomQuestions.all(20);
+        // Carica 20 domande evitando quelle usate di recente
+        game.questions = getSmartRandomQuestions(20);
         if (game.questions.length < 10) {
+            logger.quiz.error(pin, 'QUESTIONS', 'Domande insufficienti', { available: game.questions.length });
             return { error: `Solo ${game.questions.length} domande disponibili` };
         }
+
+        // LOG: Traccia le domande caricate per debug "stesse domande"
+        logger.quiz.questionsLoaded(pin, game.questions);
 
         game.status = 'playing';
         game.currentQuestionIndex = -1;
@@ -173,6 +245,9 @@ class GameManager {
         game.questionStartTime = Date.now();
 
         const q = game.questions[game.currentQuestionIndex];
+
+        // LOG: Traccia ogni domanda mostrata
+        logger.quiz.questionShown(pin, game.currentQuestionIndex, q.id, q.text);
 
         // Prepara lista poteri attivi per questo turno
         const activePowers = [];
@@ -298,6 +373,9 @@ class GameManager {
             game.targetedPlayers.add(targetSocketId);
         }
 
+        // LOG: Traccia uso abilita
+        logger.quiz.abilityUsed(pin, player.nickname, ability, target?.nickname);
+
         return {
             success: true,
             ability,
@@ -371,11 +449,21 @@ class GameManager {
         if (!game) return { ready: 0, total: 0, allReady: false };
 
         const total = game.players.size;
-        const ready = game.powerSelectionDone.size;
+        // Conta solo i giocatori ancora connessi che hanno completato
+        let ready = 0;
+        for (const socketId of game.powerSelectionDone) {
+            if (game.players.has(socketId)) {
+                ready++;
+            }
+        }
+
+        // Se non ci sono giocatori, considera come "tutti pronti" per evitare blocchi
+        const allReady = total === 0 ? false : ready >= total;
+
         return {
             ready,
             total,
-            allReady: ready >= total
+            allReady
         };
     }
 
@@ -443,12 +531,12 @@ class GameManager {
                 if (ability.type === 'steal' && ability.targetSocketId) {
                     const target = game.players.get(ability.targetSocketId);
                     if (target) {
-                        // Ruba 2 punti
+                        // Ruba 8 punti
                         const currentPoints = pointsEarned.get(socketId) || 0;
-                        pointsEarned.set(socketId, currentPoints + 2);
+                        pointsEarned.set(socketId, currentPoints + 8);
 
                         const targetPoints = pointsEarned.get(ability.targetSocketId) || 0;
-                        pointsEarned.set(ability.targetSocketId, Math.max(0, targetPoints - 2));
+                        pointsEarned.set(ability.targetSocketId, Math.max(0, targetPoints - 8));
 
                         events.push({
                             type: 'steal',
@@ -593,6 +681,9 @@ class GameManager {
         // Prendi la prossima sfida
         const challenge = game.pendingChallenges.shift();
         game.currentChallenge = challenge;
+
+        // LOG: Traccia inizio sfida
+        logger.quiz.challengeStarted(pin, challenge.challengerNickname, challenge.targetNickname);
         game.challengeAnswers.clear();
 
         // Trova una domanda non ancora usata per sfide
@@ -711,22 +802,20 @@ class GameManager {
             const loserPlayer = game.players.get(loserSocketId);
 
             if (winnerPlayer && loserPlayer) {
-                const winnerOldScore = winnerPlayer.score;
-                const loserOldScore = loserPlayer.score;
-
-                // Raddoppia i punti del vincitore
-                winnerPlayer.score = winnerOldScore * 2;
-                // Dimezza i punti del perdente (arrotonda per difetto)
-                loserPlayer.score = Math.floor(loserOldScore / 2);
+                // Il vincitore della sfida guadagna 10 punti bonus
+                const challengeBonus = 10;
+                winnerPlayer.score += challengeBonus;
 
                 // Aggiorna nel database
-                queries.updatePlayerScore.run(winnerPlayer.score - winnerOldScore, winnerPlayer.odId);
-                queries.updatePlayerScore.run(loserPlayer.score - loserOldScore, loserPlayer.odId);
+                queries.updatePlayerScore.run(challengeBonus, winnerPlayer.odId);
             }
         }
 
         // Reset sfida corrente
         game.currentChallenge = null;
+
+        // LOG: Traccia risultato sfida
+        logger.quiz.challengeResult(pin, winner, loser, !winner);
 
         return {
             correctAnswer,
@@ -777,6 +866,9 @@ class GameManager {
         }
 
         rankings.sort((a, b) => b.score - a.score);
+
+        // LOG: Traccia fine partita
+        logger.quiz.gameEnded(pin, rankings);
 
         return {
             finished: true,

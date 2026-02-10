@@ -90,6 +90,89 @@
             line-height: 1.8;
         }
 
+        .scoring-section {
+            margin-top: 40px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .scoring-toggle {
+            background: none;
+            border: 1px solid var(--gray);
+            color: var(--light);
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .scoring-toggle:hover {
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .scoring-panel {
+            display: none;
+            margin-top: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: left;
+        }
+
+        .scoring-panel.open {
+            display: block;
+        }
+
+        .scoring-panel h3 {
+            color: var(--light);
+            font-size: 1rem;
+            margin-bottom: 14px;
+        }
+
+        .scoring-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .scoring-table td {
+            padding: 6px 0;
+            color: var(--gray);
+            vertical-align: top;
+        }
+
+        .scoring-table td:first-child {
+            color: var(--light);
+            font-weight: 500;
+            padding-right: 12px;
+            white-space: nowrap;
+        }
+
+        .scoring-table td:last-child {
+            text-align: right;
+            font-family: monospace;
+            color: var(--primary);
+        }
+
+        .scoring-table tr.section-title td {
+            padding-top: 14px;
+            color: var(--secondary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .scoring-table tr.divider td {
+            padding: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
         @media (max-width: 600px) {
             .landing .logo {
                 font-size: 2.5rem;
@@ -123,6 +206,65 @@
             <p>1. L'host crea la partita sulla TV</p>
             <p>2. I giocatori entrano con il PIN dal telefono</p>
             <p>3. 10 domande, rispondi veloce per più punti!</p>
+        </div>
+
+        <div class="scoring-section">
+            <button class="scoring-toggle" onclick="this.nextElementSibling.classList.toggle('open')">
+                Come funzionano i punti?
+            </button>
+            <div class="scoring-panel">
+                <h3>Punteggio base</h3>
+                <table class="scoring-table">
+                    <tr>
+                        <td>Risposta corretta</td>
+                        <td>+10 pt</td>
+                    </tr>
+                    <tr>
+                        <td>Bonus velocità</td>
+                        <td>fino a +5 pt</td>
+                    </tr>
+                    <tr>
+                        <td>Risposta sbagliata</td>
+                        <td>0 pt</td>
+                    </tr>
+                </table>
+
+                <h3 style="margin-top: 18px;">Abilità</h3>
+                <table class="scoring-table">
+                    <tr>
+                        <td>Double</td>
+                        <td>×2 i tuoi pt</td>
+                    </tr>
+                    <tr>
+                        <td>Halve</td>
+                        <td>÷2 pt avversario</td>
+                    </tr>
+                    <tr>
+                        <td>Block</td>
+                        <td>0 pt avversario</td>
+                    </tr>
+                    <tr>
+                        <td>Steal</td>
+                        <td>rubi 8 pt</td>
+                    </tr>
+                    <tr>
+                        <td>Sfida</td>
+                        <td>+10 pt al vincitore</td>
+                    </tr>
+                    <tr>
+                        <td>Shuffle</td>
+                        <td>mescola risposte</td>
+                    </tr>
+                    <tr>
+                        <td>Obfuscate</td>
+                        <td>oscura domanda</td>
+                    </tr>
+                </table>
+
+                <p style="margin-top: 14px; font-size: 0.8rem; color: var(--gray);">
+                    Ogni abilità si può usare una sola volta a partita. Rispondi in fretta per ottenere il bonus velocità!
+                </p>
+            </div>
         </div>
     </div>
 </body>
