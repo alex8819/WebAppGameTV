@@ -6,6 +6,10 @@ const path = require('path');
 const gameManager = require('./gameManager');
 const elementalManager = require('./elementalGameManager');
 const racersManager = require('./racersGameManager');
+const towerManager = require('./towerDefenseGameManager');
+const mazeManager = require('./mazeGameManager');
+const assoManager = require('./assoGameManager');
+const logger = require('./logger');
 
 const app = express();
 const httpServer = createServer(app);
@@ -43,9 +47,46 @@ app.get('/racers-play', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'racers-play.html'));
 });
 
+// Tower Defense routes
+app.get('/tower-host', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'tower-host.html'));
+});
+
+app.get('/tower-play', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'tower-play.html'));
+});
+
+// Maze game routes
+app.get('/maze-home', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'maze-home.html'));
+});
+
+app.get('/maze-host', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'maze-host.html'));
+});
+
+app.get('/maze-play', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'maze-play.html'));
+});
+
+// Asso che Fugge routes
+app.get('/asso-host', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'asso-host.html'));
+});
+
+app.get('/asso-play', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'asso-play.html'));
+});
+
+// API per statistiche e log (utile per debug)
+app.get('/api/stats', (req, res) => {
+    res.json(logger.getAllStats());
+});
+
 // Socket.io handlers
 io.on('connection', (socket) => {
     console.log(`Client connesso: ${socket.id}`);
+    logger.general.clientConnected(socket.id);
 
     // === HOST EVENTS ===
 
@@ -148,7 +189,16 @@ io.on('connection', (socket) => {
         const result = gameManager.submitAnswer(pin, socket.id, answer);
 
         if (result.error) {
-            socket.emit('answer:error', { message: result.error });
+            // Log se il giocatore non e' trovato
+            if (result.error === 'Giocatore non trovato') {
+                logger.quiz.error(pin, 'PLAYER_NOT_FOUND', 'Risposta da giocatore non trovato', {
+                    socketId: socket.id,
+                    answer
+                });
+                socket.emit('answer:error', { message: 'Sessione scaduta - ricarica la pagina' });
+            } else {
+                socket.emit('answer:error', { message: result.error });
+            }
             return;
         }
 
@@ -168,7 +218,21 @@ io.on('connection', (socket) => {
 
     socket.on('player:use-ability', ({ pin, ability, targetSocketId }) => {
         const game = gameManager.getGame(pin);
-        const attacker = game?.players.get(socket.id);
+        if (!game) {
+            socket.emit('ability:error', { message: 'Partita non trovata' });
+            return;
+        }
+
+        const attacker = game.players.get(socket.id);
+        if (!attacker) {
+            logger.quiz.error(pin, 'PLAYER_NOT_FOUND', 'Uso abilita da giocatore non trovato', {
+                socketId: socket.id,
+                ability,
+                playersInGame: Array.from(game.players.keys())
+            });
+            socket.emit('ability:error', { message: 'Sessione scaduta - ricarica la pagina' });
+            return;
+        }
 
         const result = gameManager.useAbility(pin, socket.id, ability, targetSocketId);
 
@@ -241,6 +305,33 @@ io.on('connection', (socket) => {
 
     // Giocatore passa (non usa potere)
     socket.on('player:pass-power', ({ pin }) => {
+        const game = gameManager.getGame(pin);
+        if (!game) {
+            socket.emit('game:error', { message: 'Partita non trovata' });
+            return;
+        }
+
+        const player = game.players.get(socket.id);
+
+        // LOG: Debug passa potere
+        logger.quiz.error(pin, 'PASS_POWER', 'Giocatore ha passato', {
+            nickname: player?.nickname || 'DISCONNECTED',
+            socketId: socket.id,
+            playersCount: game.players.size,
+            alreadyDone: game.powerSelectionDone?.has(socket.id) || false,
+            playerFound: !!player
+        });
+
+        // Se il giocatore non e' trovato, log ma continua comunque
+        if (!player) {
+            logger.quiz.error(pin, 'PLAYER_NOT_FOUND', 'Pass power da giocatore non trovato', {
+                socketId: socket.id,
+                playersInGame: Array.from(game.players.keys())
+            });
+            socket.emit('game:error', { message: 'Sessione scaduta - ricarica la pagina' });
+            return;
+        }
+
         gameManager.markPowerSelectionDone(pin, socket.id);
         socket.emit('game:power-passed');
         broadcastPowerSelectionStatus(pin);
@@ -256,7 +347,10 @@ io.on('connection', (socket) => {
         if (!game) return;
 
         const player = game.players.get(socket.id);
-        if (!player) return;
+        if (!player) {
+            logger.quiz.error(pin, 'PLAYER_NOT_FOUND', 'Reaction da giocatore non trovato', { socketId: socket.id });
+            return;
+        }
 
         io.to(`host:${pin}`).emit('game:reaction', {
             nickname: player.nickname,
@@ -454,7 +548,6 @@ io.on('connection', (socket) => {
 
     socket.on('racers:host-create', () => {
         const { pin, track } = racersManager.createGame(socket.id);
-        socket.join(`racers:${pin}`);
         socket.join(`racers-host:${pin}`);
         socket.emit('racers:created', { pin, track });
         console.log(`Micro Racers creato: PIN ${pin}`);
@@ -486,11 +579,19 @@ io.on('connection', (socket) => {
         io.to(`racers:${pin}`).emit('racers:lobby-update', {
             players: racersManager.getPlayers(pin)
         });
+        io.to(`racers-host:${pin}`).emit('racers:lobby-update', {
+            players: racersManager.getPlayers(pin)
+        });
+
+        // Start/reset lobby countdown timer
+        startRacersLobbyTimer(pin);
 
         console.log(`${nickname} si è unito a Micro Racers ${pin}`);
     });
 
     socket.on('racers:host-start', ({ pin }) => {
+        stopRacersLobbyTimer(pin);
+
         const result = racersManager.startCountdown(pin);
         if (result.error) {
             socket.emit('racers:error', { message: result.error });
@@ -534,6 +635,611 @@ io.on('connection', (socket) => {
         }
     });
 
+    // === TOWER DEFENSE EVENTS ===
+
+    socket.on('tower:host-create', () => {
+        const { pin } = towerManager.createGame(socket.id);
+        socket.join(`tower-host:${pin}`);
+        socket.emit('tower:created', { pin });
+        console.log(`Tower Defense creato: PIN ${pin}`);
+    });
+
+    socket.on('tower:player-join', ({ pin, nickname, avatar }) => {
+        const result = towerManager.joinGame(pin, nickname, socket.id, avatar);
+
+        if (result.error) {
+            socket.emit('tower:join-error', { message: result.error });
+            return;
+        }
+
+        socket.join(`tower:${pin}`);
+        socket.data.towerPin = pin;
+        socket.data.towerNickname = nickname;
+
+        socket.emit('tower:joined', {
+            gamePin: pin,
+            players: towerManager.getPlayersArray(pin),
+            player: result.player
+        });
+
+        io.to(`tower-host:${pin}`).emit('tower:player-joined', {
+            player: result.player,
+            players: towerManager.getPlayersArray(pin)
+        });
+
+        io.to(`tower:${pin}`).emit('tower:lobby-update', {
+            players: towerManager.getPlayersArray(pin)
+        });
+
+        console.log(`${nickname} si è unito a Tower Defense ${pin}`);
+    });
+
+    socket.on('tower:host-start', ({ pin }) => {
+        const result = towerManager.startGame(pin);
+        if (result.error) {
+            socket.emit('tower:error', { message: result.error });
+            return;
+        }
+
+        io.to(`tower:${pin}`).emit('tower:game-started', {
+            map: result.map,
+            players: result.players
+        });
+
+        io.to(`tower-host:${pin}`).emit('tower:game-started', {
+            map: result.map,
+            players: result.players
+        });
+
+        // Send building phase start
+        io.to(`tower:${pin}`).emit('tower:building-phase', { waveNumber: 0 });
+        io.to(`tower-host:${pin}`).emit('tower:building-phase', { waveNumber: 0 });
+
+        console.log(`Tower Defense ${pin} avviato`);
+    });
+
+    socket.on('tower:build-tower', ({ pin, slotId, towerType }) => {
+        const result = towerManager.placeTower(pin, socket.id, slotId, towerType);
+
+        if (result.error) {
+            socket.emit('tower:build-error', { message: result.error });
+            return;
+        }
+
+        // Get the slot
+        const game = towerManager.getGame(pin);
+        const slot = game?.map.towerSlots.find(s => s.id === slotId);
+
+        // Notify player of success
+        socket.emit('tower:tower-placed', {
+            tower: result.tower,
+            player: result.player,
+            slot: { id: slotId }
+        });
+
+        // Notify host
+        io.to(`tower-host:${pin}`).emit('tower:tower-placed', {
+            tower: result.tower,
+            player: result.player
+        });
+
+        // Update game state for host
+        io.to(`tower-host:${pin}`).emit('tower:game-state', towerManager.getGameStateForBroadcast(pin));
+    });
+
+    socket.on('tower:upgrade-tower', ({ pin, slotId }) => {
+        const result = towerManager.upgradeTower(pin, socket.id, slotId);
+
+        if (result.error) {
+            socket.emit('tower:build-error', { message: result.error });
+            return;
+        }
+
+        socket.emit('tower:tower-upgraded', {
+            tower: result.tower,
+            player: result.player,
+            slot: { id: slotId }
+        });
+
+        io.to(`tower-host:${pin}`).emit('tower:game-state', towerManager.getGameStateForBroadcast(pin));
+    });
+
+    socket.on('tower:sell-tower', ({ pin, slotId }) => {
+        const result = towerManager.sellTower(pin, socket.id, slotId);
+
+        if (result.error) {
+            socket.emit('tower:build-error', { message: result.error });
+            return;
+        }
+
+        socket.emit('tower:tower-sold', {
+            slotId: result.slotId,
+            player: result.player,
+            refund: result.refund
+        });
+
+        io.to(`tower-host:${pin}`).emit('tower:game-state', towerManager.getGameStateForBroadcast(pin));
+    });
+
+    socket.on('tower:vote-ready', ({ pin }) => {
+        const result = towerManager.voteReady(pin, socket.id);
+
+        if (result.error) {
+            return;
+        }
+
+        io.to(`tower:${pin}`).emit('tower:ready-update', {
+            readyCount: result.readyCount,
+            totalPlayers: result.totalPlayers
+        });
+
+        io.to(`tower-host:${pin}`).emit('tower:ready-update', {
+            readyCount: result.readyCount,
+            totalPlayers: result.totalPlayers
+        });
+
+        // If all ready, start wave
+        if (result.allReady) {
+            startTowerWave(pin);
+        }
+    });
+
+    socket.on('tower:unvote-ready', ({ pin }) => {
+        const result = towerManager.unvoteReady(pin, socket.id);
+
+        if (result.error) {
+            return;
+        }
+
+        io.to(`tower:${pin}`).emit('tower:ready-update', {
+            readyCount: result.readyCount,
+            totalPlayers: result.totalPlayers
+        });
+
+        io.to(`tower-host:${pin}`).emit('tower:ready-update', {
+            readyCount: result.readyCount,
+            totalPlayers: result.totalPlayers
+        });
+    });
+
+    // === MAZE GAME EVENTS ===
+
+    socket.on('maze:host-create', () => {
+        const { pin } = mazeManager.createGame(socket.id);
+        socket.join(`maze:${pin}`);
+        socket.join(`maze-host:${pin}`);
+        socket.emit('maze:created', { pin });
+        console.log(`Labirinto Invisibile creato: PIN ${pin}`);
+    });
+
+    socket.on('maze:join-team', ({ pin, playerName, teamName, role }) => {
+        const result = mazeManager.joinTeam(pin, playerName, teamName, role, socket.id);
+
+        if (result.error) {
+            socket.emit('maze:join-error', { message: result.error });
+            return;
+        }
+
+        socket.join(`maze:${pin}`);
+        socket.data.mazePin = pin;
+        socket.data.mazeTeamId = result.team.id;
+        socket.data.mazeRole = role;
+
+        socket.emit('maze:joined', {
+            team: result.team,
+            role
+        });
+
+        // Notify host
+        io.to(`maze-host:${pin}`).emit('maze:team-joined', {
+            team: result.team,
+            teams: mazeManager.getTeamsArray(pin)
+        });
+
+        // If teammate exists, notify them
+        if (result.teammate) {
+            io.to(result.teammate.socketId).emit('maze:team-updated', {
+                team: result.team
+            });
+        }
+
+        // Broadcast teams update
+        io.to(`maze-host:${pin}`).emit('maze:team-updated', {
+            teams: mazeManager.getTeamsArray(pin)
+        });
+
+        console.log(`${playerName} si è unito al labirinto ${pin} come ${role} nella squadra ${teamName}`);
+    });
+
+    socket.on('maze:host-start', ({ pin }) => {
+        const result = mazeManager.startGame(pin);
+
+        if (result.error) {
+            socket.emit('maze:error', { message: result.error });
+            return;
+        }
+
+        // Notify host with full maze data
+        io.to(`maze-host:${pin}`).emit('maze:game-starting', {
+            maze: result.maze,
+            traps: result.traps,
+            teams: result.teams,
+            startPosition: result.startPosition,
+            endPosition: result.endPosition,
+            width: result.width,
+            height: result.height
+        });
+
+        // Notify each player with their role
+        const game = mazeManager.getGame(pin);
+        for (const team of game.teams.values()) {
+            if (team.navigator) {
+                io.to(team.navigator.socketId).emit('maze:game-starting', { role: 'navigator' });
+            }
+            if (team.pilot) {
+                io.to(team.pilot.socketId).emit('maze:game-starting', { role: 'pilot' });
+            }
+        }
+
+        console.log(`Labirinto ${pin} in avvio...`);
+    });
+
+    socket.on('maze:countdown-done', ({ pin }) => {
+        const result = mazeManager.startPlaying(pin);
+
+        if (result.error) return;
+
+        // Notify host
+        io.to(`maze-host:${pin}`).emit('maze:game-started');
+
+        // Notify all players
+        const game = mazeManager.getGame(pin);
+        for (const team of game.teams.values()) {
+            if (team.navigator) {
+                io.to(team.navigator.socketId).emit('maze:game-started', { role: 'navigator' });
+            }
+            if (team.pilot) {
+                io.to(team.pilot.socketId).emit('maze:game-started', { role: 'pilot' });
+            }
+        }
+
+        // Start moving walls timer
+        startMazeWallsTimer(pin);
+
+        console.log(`Labirinto ${pin} iniziato!`);
+    });
+
+    socket.on('maze:move', ({ pin, direction }) => {
+        const result = mazeManager.movePlayer(pin, socket.id, direction);
+
+        if (!result || result.error) return;
+
+        if (result.collision) {
+            socket.emit('maze:wall-collision');
+            return;
+        }
+
+        if (result.slowed) return;
+
+        if (result.trap) {
+            socket.emit('maze:trap-triggered', { trapType: result.trap.type });
+
+            io.to(`maze-host:${pin}`).emit('maze:trap-triggered', {
+                teamId: result.teamId,
+                trapType: result.trap.type,
+                newPosition: result.trap.newPosition
+            });
+        }
+
+        // Broadcast position update
+        io.to(`maze-host:${pin}`).emit('maze:player-moved', {
+            teamId: result.teamId,
+            position: result.position
+        });
+
+        // Check for winner
+        if (result.winner) {
+            const game = mazeManager.getGame(pin);
+            const winnerTeam = game.teams.get(result.teamId);
+
+            // Stop walls timer
+            stopMazeWallsTimer(pin);
+
+            io.to(`maze-host:${pin}`).emit('maze:game-won', {
+                winner: {
+                    name: winnerTeam.name,
+                    color: winnerTeam.color,
+                    navigator: winnerTeam.navigator?.name,
+                    pilot: winnerTeam.pilot?.name,
+                    time: result.time
+                }
+            });
+
+            // Notify all players
+            for (const team of game.teams.values()) {
+                const isWinner = team.id === result.teamId;
+
+                if (team.navigator) {
+                    io.to(team.navigator.socketId).emit('maze:game-won', {
+                        winner: { name: winnerTeam.name },
+                        isMyTeam: isWinner,
+                        time: result.time
+                    });
+                }
+                if (team.pilot) {
+                    io.to(team.pilot.socketId).emit('maze:game-won', {
+                        winner: { name: winnerTeam.name },
+                        isMyTeam: isWinner,
+                        time: result.time
+                    });
+                }
+            }
+
+            console.log(`Labirinto ${pin}: ${winnerTeam.name} ha vinto!`);
+        }
+    });
+
+    // === ASSO CHE FUGGE (CUCÙ) EVENTS ===
+
+    socket.on('asso:create-game', () => {
+        const { pin } = assoManager.createGame(socket.id);
+        socket.join(`asso-host:${pin}`);
+        socket.emit('asso:game-created', { pin });
+        console.log(`[CUCÙ] Partita creata: PIN ${pin}`);
+    });
+
+    socket.on('asso:join-game', ({ pin, nickname }) => {
+        const result = assoManager.joinGame(pin, socket.id, nickname);
+
+        if (result.error) {
+            socket.emit('asso:join-error', { message: result.error });
+            return;
+        }
+
+        socket.join(`asso-game:${pin}`);
+        socket.data.assoPin = pin;
+        socket.data.assoNickname = nickname;
+
+        socket.emit('asso:joined', {
+            player: result.player,
+            players: result.players
+        });
+
+        // Notify host
+        io.to(`asso-host:${pin}`).emit('asso:player-joined', {
+            players: result.players
+        });
+
+        // Start/reset lobby countdown (50 seconds)
+        const game = assoManager.getGame(pin);
+        if (game && game.state === 'lobby') {
+            assoManager.startLobbyCountdown(
+                pin,
+                // onTick - broadcast countdown to everyone
+                (countdown) => {
+                    io.to(`asso-host:${pin}`).emit('asso:lobby-countdown', { countdown });
+                    io.to(`asso-game:${pin}`).emit('asso:lobby-countdown', { countdown });
+                },
+                // onComplete - auto-start game
+                () => {
+                    console.log(`[CUCÙ] Countdown terminato, avvio automatico partita ${pin}`);
+                    const startResult = assoManager.startGame(pin);
+                    if (!startResult.error) {
+                        io.to(`asso-host:${pin}`).emit('asso:game-starting');
+                        io.to(`asso-game:${pin}`).emit('asso:game-starting');
+
+                        // Countdown 3-2-1 poi inizia il round
+                        let count = 3;
+                        const countdownInterval = setInterval(() => {
+                            io.to(`asso-host:${pin}`).emit('asso:countdown', { count });
+                            io.to(`asso-game:${pin}`).emit('asso:countdown', { count });
+                            count--;
+                            if (count < 0) {
+                                clearInterval(countdownInterval);
+                                startCucuRound(pin);
+                            }
+                        }, 1000);
+                    }
+                }
+            );
+
+            // Send initial countdown value to the new player
+            socket.emit('asso:lobby-countdown', { countdown: assoManager.LOBBY_COUNTDOWN_SECONDS });
+        }
+
+        console.log(`[CUCÙ] ${nickname} si è unito alla partita ${pin}`);
+    });
+
+    socket.on('asso:start-game', ({ pin }) => {
+        // Stop lobby countdown if running
+        assoManager.stopLobbyCountdown(pin);
+
+        const result = assoManager.startGame(pin);
+
+        if (result.error) {
+            socket.emit('asso:error', { message: result.error });
+            return;
+        }
+
+        io.to(`asso-host:${pin}`).emit('asso:game-starting');
+        io.to(`asso-game:${pin}`).emit('asso:game-starting');
+
+        // Countdown poi inizia il primo round
+        let count = 3;
+        const countdownInterval = setInterval(() => {
+            io.to(`asso-host:${pin}`).emit('asso:countdown', { count });
+            io.to(`asso-game:${pin}`).emit('asso:countdown', { count });
+
+            count--;
+            if (count < 0) {
+                clearInterval(countdownInterval);
+                startCucuRound(pin);
+            }
+        }, 1000);
+    });
+
+    // Giocatore guarda la propria carta (tieni premuto)
+    socket.on('asso:peek-card', ({ pin }) => {
+        const result = assoManager.playerPeekedCard(pin, socket.id);
+
+        if (result && result.revealed) {
+            // Re o Cavallo: notifica tutti
+            io.to(`asso-host:${pin}`).emit('asso:card-revealed', {
+                socketId: result.socketId,
+                nickname: result.nickname,
+                card: result.card
+            });
+            io.to(`asso-game:${pin}`).emit('asso:card-revealed', {
+                socketId: result.socketId,
+                nickname: result.nickname,
+                card: result.card
+            });
+        }
+    });
+
+    // Giocatore bussa (tiene la carta)
+    socket.on('asso:knock', ({ pin }) => {
+        const result = assoManager.playerKnock(pin, socket.id);
+
+        if (result.error) {
+            socket.emit('asso:action-error', { message: result.error });
+            return;
+        }
+
+        const game = assoManager.getGame(pin);
+        const player = game?.players.get(socket.id);
+
+        // Notifica tutti dell'azione
+        io.to(`asso-host:${pin}`).emit('asso:player-knocked', {
+            socketId: socket.id,
+            nickname: player?.nickname,
+            players: result.players
+        });
+        io.to(`asso-game:${pin}`).emit('asso:player-knocked', {
+            socketId: socket.id,
+            nickname: player?.nickname
+        });
+
+        // Se round completo, rivela le carte
+        if (result.roundComplete) {
+            endCucuRound(pin);
+        } else {
+            // Notifica il prossimo giocatore
+            notifyNextCucuPlayer(pin, result);
+        }
+    });
+
+    // Giocatore passa (scambia carta)
+    socket.on('asso:pass', ({ pin }) => {
+        const result = assoManager.playerPass(pin, socket.id);
+
+        if (result.error) {
+            socket.emit('asso:action-error', { message: result.error });
+            return;
+        }
+
+        const game = assoManager.getGame(pin);
+        const player = game?.players.get(socket.id);
+
+        if (result.action === 'blocked') {
+            // Bloccato dal Re
+            io.to(`asso-host:${pin}`).emit('asso:pass-blocked', {
+                socketId: socket.id,
+                nickname: player?.nickname,
+                blockedBy: result.blockedBy,
+                skipped: result.skipped,
+                players: result.players
+            });
+            io.to(`asso-game:${pin}`).emit('asso:pass-blocked', {
+                socketId: socket.id,
+                nickname: player?.nickname,
+                blockedBy: result.blockedBy
+            });
+        } else if (result.action === 'passed') {
+            // Scambio riuscito - invia le nuove carte ai giocatori coinvolti
+            const newPlayerCard = assoManager.getPlayerCard(pin, socket.id);
+            const newTargetCard = assoManager.getPlayerCard(pin, result.target.socketId);
+
+            // Notifica chi ha passato
+            socket.emit('asso:card-changed', { card: newPlayerCard });
+
+            // Notifica chi ha ricevuto
+            io.to(result.target.socketId).emit('asso:card-changed', { card: newTargetCard });
+
+            // Notifica host e tutti
+            io.to(`asso-host:${pin}`).emit('asso:cards-swapped', {
+                from: { socketId: socket.id, nickname: player?.nickname },
+                to: result.target,
+                skipped: result.skipped,
+                players: result.players
+            });
+            io.to(`asso-game:${pin}`).emit('asso:cards-swapped', {
+                from: { socketId: socket.id, nickname: player?.nickname },
+                to: result.target,
+                skipped: result.skipped
+            });
+        }
+
+        // Se round completo, rivela le carte
+        if (result.roundComplete) {
+            endCucuRound(pin);
+        } else {
+            notifyNextCucuPlayer(pin, result);
+        }
+    });
+
+    // Mazziere pesca dal mazzo
+    socket.on('asso:draw', ({ pin }) => {
+        const result = assoManager.dealerDraw(pin, socket.id);
+
+        if (result.error) {
+            socket.emit('asso:action-error', { message: result.error });
+            return;
+        }
+
+        const game = assoManager.getGame(pin);
+        const player = game?.players.get(socket.id);
+
+        // Invia la nuova carta al mazziere
+        socket.emit('asso:card-changed', { card: result.drawnCard });
+
+        // Notifica tutti
+        io.to(`asso-host:${pin}`).emit('asso:dealer-drew', {
+            socketId: socket.id,
+            nickname: player?.nickname,
+            drewSpecial: result.drawnCard.isRe || result.drawnCard.isCavallo,
+            card: (result.drawnCard.isRe || result.drawnCard.isCavallo) ? result.drawnCard : null,
+            players: result.players
+        });
+        io.to(`asso-game:${pin}`).emit('asso:dealer-drew', {
+            socketId: socket.id,
+            nickname: player?.nickname
+        });
+
+        // Round completo dopo che il mazziere ha agito
+        if (result.roundComplete) {
+            endCucuRound(pin);
+        }
+    });
+
+    // Host richiede di iniziare il prossimo round
+    socket.on('asso:next-round', ({ pin }) => {
+        const gameOver = assoManager.checkGameOver(pin);
+
+        if (gameOver.gameOver) {
+            io.to(`asso-host:${pin}`).emit('asso:game-over', {
+                winner: gameOver.winner,
+                standings: gameOver.finalStandings
+            });
+            io.to(`asso-game:${pin}`).emit('asso:game-over', {
+                winner: gameOver.winner,
+                standings: gameOver.finalStandings
+            });
+        } else {
+            startCucuRound(pin);
+        }
+    });
+
     // === DISCONNECT ===
 
     socket.on('disconnect', () => {
@@ -542,7 +1248,8 @@ io.on('connection', (socket) => {
         if (result) {
             if (result.isHost) {
                 io.to(`game:${result.pin}`).emit('game:host-left');
-            } else {
+            } else if (!result.gracePeriod) {
+                // Solo notifica se NON siamo in grace period (lobby)
                 io.to(`host:${result.pin}`).emit('game:player-left', {
                     player: result.player
                 });
@@ -550,6 +1257,8 @@ io.on('connection', (socket) => {
                     players: gameManager.getPlayers(result.pin)
                 });
             }
+            // Se gracePeriod=true, il giocatore e' ancora nel gioco
+            // e puo' riconnettersi senza problemi
         }
 
         // Handle Elemental Clash disconnect
@@ -572,7 +1281,8 @@ io.on('connection', (socket) => {
         if (racersResult) {
             if (racersResult.isHost) {
                 io.to(`racers:${racersResult.pin}`).emit('racers:host-left');
-                // Stop game loop
+                // Stop timers and game loop
+                stopRacersLobbyTimer(racersResult.pin);
                 stopRacersGameLoop(racersResult.pin);
             } else {
                 io.to(`racers-host:${racersResult.pin}`).emit('racers:player-left', {
@@ -581,10 +1291,76 @@ io.on('connection', (socket) => {
                 io.to(`racers:${racersResult.pin}`).emit('racers:lobby-update', {
                     players: racersManager.getPlayers(racersResult.pin)
                 });
+                io.to(`racers-host:${racersResult.pin}`).emit('racers:lobby-update', {
+                    players: racersManager.getPlayers(racersResult.pin)
+                });
+
+                // Stop lobby timer if no players left
+                const remainingPlayers = racersManager.getPlayers(racersResult.pin);
+                if (remainingPlayers.length === 0) {
+                    stopRacersLobbyTimer(racersResult.pin);
+                }
+            }
+        }
+
+        // Handle Tower Defense disconnect
+        const towerResult = towerManager.leaveGame(socket.id);
+        if (towerResult) {
+            if (towerResult.isHost) {
+                io.to(`tower:${towerResult.pin}`).emit('tower:host-left');
+                // Stop game loop
+                stopTowerGameLoop(towerResult.pin);
+                towerManager.deleteGame(towerResult.pin);
+            } else {
+                io.to(`tower-host:${towerResult.pin}`).emit('tower:player-left', {
+                    player: towerResult.player
+                });
+                io.to(`tower:${towerResult.pin}`).emit('tower:lobby-update', {
+                    players: towerManager.getPlayersArray(towerResult.pin)
+                });
+            }
+        }
+
+        // Handle Maze game disconnect
+        const mazeResult = mazeManager.leaveGame(socket.id);
+        if (mazeResult) {
+            if (mazeResult.isHost) {
+                io.to(`maze:${mazeResult.pin}`).emit('maze:host-left');
+                stopMazeWallsTimer(mazeResult.pin);
+                mazeManager.deleteGame(mazeResult.pin);
+            } else {
+                io.to(`maze-host:${mazeResult.pin}`).emit('maze:player-left', {
+                    teams: mazeManager.getTeamsArray(mazeResult.pin)
+                });
+            }
+        }
+
+        // Handle Asso che Fugge disconnect
+        const assoResult = assoManager.handleDisconnect(socket.id);
+        if (assoResult) {
+            if (assoResult.type === 'host') {
+                io.to(`asso-game:${assoResult.pin}`).emit('asso:host-disconnected');
+                const timerId = assoRoundTimers.get(assoResult.pin);
+                if (timerId) {
+                    clearTimeout(timerId);
+                    assoRoundTimers.delete(assoResult.pin);
+                }
+            } else {
+                io.to(`asso-host:${assoResult.pin}`).emit('asso:player-left', {
+                    players: assoResult.players
+                });
             }
         }
 
         console.log(`Client disconnesso: ${socket.id}`);
+        logger.general.clientDisconnected(socket.id, {
+            quiz: result ? result.pin : null,
+            elemental: elementalResult ? elementalResult.pin : null,
+            racers: racersResult ? racersResult.pin : null,
+            tower: towerResult ? towerResult.pin : null,
+            maze: mazeResult ? mazeResult.pin : null,
+            asso: assoResult ? assoResult.pin : null
+        });
     });
 });
 
@@ -599,15 +1375,25 @@ function broadcastPowerSelectionStatus(pin) {
     // Controlla se è l'ultima domanda
     const isLastQuestion = game.currentQuestionIndex >= 9;
 
+    // LOG: Debug power selection status
+    logger.quiz.error(pin, 'POWER_SELECT_DEBUG', 'Status selezione poteri', {
+        ready: status.ready,
+        total: status.total,
+        allReady: status.allReady,
+        isLastQuestion,
+        countdownStarted: countdownStarted.get(pin) || false,
+        currentQuestionIndex: game.currentQuestionIndex
+    });
+
     // Invia a tutti (host e giocatori)
     io.to(`host:${pin}`).emit('game:power-selection-update', status);
     for (const [socketId] of game.players) {
         io.to(socketId).emit('game:power-selection-update', status);
     }
 
-    // Se tutti hanno scelto e NON è l'ultima domanda, avvia countdown di 3 secondi
+    // Se tutti hanno scelto, avvia countdown di 3 secondi
     // Usa un flag per evitare timer multipli
-    if (status.allReady && !isLastQuestion && !countdownStarted.get(pin)) {
+    if (status.allReady && !countdownStarted.get(pin)) {
         countdownStarted.set(pin, true);
 
         io.to(`host:${pin}`).emit('game:all-powers-selected');
@@ -615,12 +1401,30 @@ function broadcastPowerSelectionStatus(pin) {
             io.to(socketId).emit('game:all-powers-selected');
         }
 
-        // Dopo 3 secondi, prossima domanda
+        // Dopo 3 secondi, prossima domanda o fine partita
         setTimeout(() => {
             countdownStarted.set(pin, false);
-            const result = gameManager.nextQuestion(pin);
-            if (result && !result.finished) {
-                sendQuestion(pin, result);
+
+            if (isLastQuestion) {
+                // Ultima domanda: controlla se ci sono sfide pendenti
+                if (gameManager.hasPendingChallenges(pin)) {
+                    logger.quiz.error(pin, 'POWER_SELECT', 'Ultima domanda - avvio sfide');
+                    startNextChallenge(pin);
+                } else {
+                    // Nessuna sfida, mostra classifica finale
+                    logger.quiz.error(pin, 'POWER_SELECT', 'Ultima domanda - fine partita');
+                    const finalResults = gameManager.endGame(pin);
+                    if (finalResults) {
+                        io.to(`host:${pin}`).emit('game:final-results', { rankings: finalResults.rankings });
+                        sendFinalToPlayers(pin, finalResults.rankings);
+                    }
+                }
+            } else {
+                // Non ultima domanda: prossima domanda
+                const result = gameManager.nextQuestion(pin);
+                if (result && !result.finished) {
+                    sendQuestion(pin, result);
+                }
             }
         }, 3000);
     }
@@ -1231,6 +2035,59 @@ function resolveElementalRound(pin) {
 // === MICRO RACERS HELPER FUNCTIONS ===
 
 const racersGameLoops = new Map(); // pin -> intervalId
+const racersLobbyTimers = new Map(); // pin -> { intervalId, remaining }
+
+function startRacersLobbyTimer(pin) {
+    stopRacersLobbyTimer(pin);
+
+    let remaining = 50;
+
+    // Emit initial value
+    io.to(`racers-host:${pin}`).emit('racers:lobby-timer', { remaining });
+    io.to(`racers:${pin}`).emit('racers:lobby-timer', { remaining });
+
+    const intervalId = setInterval(() => {
+        remaining--;
+        io.to(`racers-host:${pin}`).emit('racers:lobby-timer', { remaining });
+        io.to(`racers:${pin}`).emit('racers:lobby-timer', { remaining });
+
+        if (remaining <= 0) {
+            stopRacersLobbyTimer(pin);
+
+            // Auto-start the race
+            const result = racersManager.startCountdown(pin);
+            if (result.error) return;
+
+            let countdown = 3;
+            io.to(`racers:${pin}`).emit('racers:countdown', { count: countdown });
+            io.to(`racers-host:${pin}`).emit('racers:countdown', { count: countdown });
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    io.to(`racers:${pin}`).emit('racers:countdown', { count: countdown });
+                    io.to(`racers-host:${pin}`).emit('racers:countdown', { count: countdown });
+                } else {
+                    clearInterval(countdownInterval);
+                    io.to(`racers:${pin}`).emit('racers:go');
+                    io.to(`racers-host:${pin}`).emit('racers:go');
+                    racersManager.startRace(pin);
+                    startRacersGameLoop(pin);
+                }
+            }, 1000);
+        }
+    }, 1000);
+
+    racersLobbyTimers.set(pin, intervalId);
+}
+
+function stopRacersLobbyTimer(pin) {
+    const intervalId = racersLobbyTimers.get(pin);
+    if (intervalId) {
+        clearInterval(intervalId);
+        racersLobbyTimers.delete(pin);
+    }
+}
 
 function startRacersGameLoop(pin) {
     // Run at ~30fps
@@ -1280,7 +2137,294 @@ function stopRacersGameLoop(pin) {
     }
 }
 
+// === TOWER DEFENSE HELPER FUNCTIONS ===
+
+const towerGameLoops = new Map(); // pin -> intervalId
+const towerWaveTimeouts = new Map(); // pin -> timeoutId
+
+function startTowerWave(pin) {
+    const result = towerManager.startWave(pin);
+
+    if (result.error) {
+        console.log(`Error starting wave: ${result.error}`);
+        return;
+    }
+
+    // Notify everyone
+    io.to(`tower:${pin}`).emit('tower:wave-start', {
+        waveNumber: result.waveNumber,
+        totalEnemies: result.totalEnemies
+    });
+
+    io.to(`tower-host:${pin}`).emit('tower:wave-start', {
+        waveNumber: result.waveNumber,
+        totalEnemies: result.totalEnemies
+    });
+
+    console.log(`Tower Defense ${pin}: Wave ${result.waveNumber} started`);
+
+    // Start game loop
+    startTowerGameLoop(pin);
+}
+
+function startTowerGameLoop(pin) {
+    // Run at ~30fps
+    const intervalId = setInterval(() => {
+        const state = towerManager.updateGameState(pin);
+
+        if (!state) {
+            stopTowerGameLoop(pin);
+            return;
+        }
+
+        // Broadcast game state to host
+        io.to(`tower-host:${pin}`).emit('tower:game-state', state);
+
+        // Send gold updates to players
+        if (state.players) {
+            for (const player of state.players) {
+                io.to(player.socketId).emit('tower:gold-update', { gold: player.gold });
+            }
+        }
+
+        // Check if wave is complete
+        if (state.waveComplete) {
+            stopTowerGameLoop(pin);
+            handleTowerWaveComplete(pin);
+            return;
+        }
+
+        // Check if game over
+        if (state.gameOver) {
+            stopTowerGameLoop(pin);
+            handleTowerGameOver(pin, state.victory);
+            return;
+        }
+    }, 33); // ~30fps
+
+    towerGameLoops.set(pin, intervalId);
+
+    // Wave timeout (120s max)
+    const timeoutId = setTimeout(() => {
+        const game = towerManager.getGame(pin);
+        if (game && game.status === 'wave') {
+            stopTowerGameLoop(pin);
+            handleTowerWaveComplete(pin);
+        }
+    }, 120000);
+    towerWaveTimeouts.set(pin, timeoutId);
+}
+
+function stopTowerGameLoop(pin) {
+    const intervalId = towerGameLoops.get(pin);
+    if (intervalId) {
+        clearInterval(intervalId);
+        towerGameLoops.delete(pin);
+    }
+    const timeoutId = towerWaveTimeouts.get(pin);
+    if (timeoutId) {
+        clearTimeout(timeoutId);
+        towerWaveTimeouts.delete(pin);
+    }
+}
+
+// Cleanup stale tower defense games every 5 minutes
+setInterval(() => {
+    const cleaned = towerManager.cleanupStaleGames();
+    if (cleaned.length > 0) {
+        cleaned.forEach(p => stopTowerGameLoop(p));
+        console.log(`Cleaned ${cleaned.length} stale tower defense games`);
+    }
+}, 5 * 60 * 1000);
+
+function handleTowerWaveComplete(pin) {
+    const result = towerManager.completeWave(pin);
+
+    if (!result) return;
+
+    if (result.victory) {
+        handleTowerGameOver(pin, true);
+        return;
+    }
+
+    // Notify everyone
+    io.to(`tower:${pin}`).emit('tower:wave-complete', {
+        waveNumber: result.waveNumber,
+        bonus: result.bonus,
+        nextWave: result.nextWave,
+        players: result.players
+    });
+
+    io.to(`tower-host:${pin}`).emit('tower:wave-complete', {
+        waveNumber: result.waveNumber,
+        bonus: result.bonus,
+        nextWave: result.nextWave
+    });
+
+    // Return to building phase
+    io.to(`tower:${pin}`).emit('tower:building-phase', { waveNumber: result.waveNumber });
+    io.to(`tower-host:${pin}`).emit('tower:building-phase', { waveNumber: result.waveNumber });
+
+    console.log(`Tower Defense ${pin}: Wave ${result.waveNumber} completed`);
+}
+
+function handleTowerGameOver(pin, victory) {
+    const stats = towerManager.getGameStats(pin);
+
+    io.to(`tower:${pin}`).emit('tower:game-over', {
+        victory,
+        stats
+    });
+
+    io.to(`tower-host:${pin}`).emit('tower:game-over', {
+        victory,
+        stats
+    });
+
+    console.log(`Tower Defense ${pin}: Game over - ${victory ? 'Victory' : 'Defeat'}`);
+}
+
+// === MAZE GAME HELPER FUNCTIONS ===
+
+const mazeWallsTimers = new Map(); // pin -> intervalId
+
+function startMazeWallsTimer(pin) {
+    // Toggle moving walls every 5 seconds
+    const intervalId = setInterval(() => {
+        const result = mazeManager.toggleMovingWalls(pin);
+        if (result) {
+            io.to(`maze-host:${pin}`).emit('maze:moving-wall-update', {
+                state: result.state
+            });
+        }
+    }, 5000);
+
+    mazeWallsTimers.set(pin, intervalId);
+}
+
+function stopMazeWallsTimer(pin) {
+    const intervalId = mazeWallsTimers.get(pin);
+    if (intervalId) {
+        clearInterval(intervalId);
+        mazeWallsTimers.delete(pin);
+    }
+}
+
+// === CUCÙ (ASSO CHE FUGGE) HELPER FUNCTIONS ===
+
+function startCucuRound(pin) {
+    const roundData = assoManager.startRound(pin);
+    if (!roundData || roundData.error) {
+        console.log(`[CUCÙ] Errore avvio round: ${roundData?.error}`);
+        return;
+    }
+
+    // Invia info round a tutti
+    io.to(`asso-host:${pin}`).emit('asso:round-start', {
+        roundNumber: roundData.roundNumber,
+        dealerSocketId: roundData.dealerSocketId,
+        currentPlayerSocketId: roundData.currentPlayerSocketId,
+        players: roundData.players
+    });
+
+    // Invia le carte privatamente a ogni giocatore
+    const cardAssignments = assoManager.dealCards(pin);
+    for (const assignment of cardAssignments) {
+        io.to(assignment.socketId).emit('asso:your-card', {
+            card: assignment.card
+        });
+    }
+
+    // Notifica il primo giocatore che è il suo turno
+    io.to(roundData.currentPlayerSocketId).emit('asso:your-turn', {
+        isDealer: roundData.currentPlayerSocketId === roundData.dealerSocketId
+    });
+
+    io.to(`asso-game:${pin}`).emit('asso:turn-changed', {
+        currentPlayerSocketId: roundData.currentPlayerSocketId
+    });
+
+    console.log(`[CUCÙ] Round ${roundData.roundNumber} iniziato`);
+}
+
+function notifyNextCucuPlayer(pin, result) {
+    if (!result.nextPlayerSocketId) return;
+
+    // Notifica il prossimo giocatore
+    io.to(result.nextPlayerSocketId).emit('asso:your-turn', {
+        isDealer: result.isDealer
+    });
+
+    // Notifica tutti del cambio turno
+    io.to(`asso-host:${pin}`).emit('asso:turn-changed', {
+        currentPlayerSocketId: result.nextPlayerSocketId,
+        currentPlayerNickname: result.nextPlayerNickname,
+        isDealer: result.isDealer,
+        players: result.players
+    });
+
+    io.to(`asso-game:${pin}`).emit('asso:turn-changed', {
+        currentPlayerSocketId: result.nextPlayerSocketId
+    });
+}
+
+function endCucuRound(pin) {
+    // Rivela tutte le carte
+    const reveals = assoManager.revealAllCards(pin);
+
+    io.to(`asso-host:${pin}`).emit('asso:reveal-cards', { cards: reveals });
+    io.to(`asso-game:${pin}`).emit('asso:reveal-cards', { cards: reveals });
+
+    // Dopo un delay, calcola chi perde
+    setTimeout(() => {
+        const result = assoManager.endRound(pin);
+        if (!result) return;
+
+        io.to(`asso-host:${pin}`).emit('asso:round-result', {
+            losers: result.losers,
+            lowestCardName: result.lowestCardName,
+            allCards: result.allCards,
+            eliminatedThisRound: result.eliminatedThisRound,
+            players: result.players
+        });
+
+        // Invia risultato personale a ogni giocatore
+        for (const card of result.allCards) {
+            const isLoser = result.losers.some(l => l.socketId === card.socketId);
+            const wasEliminated = result.eliminatedThisRound.includes(card.nickname);
+
+            io.to(card.socketId).emit('asso:your-round-result', {
+                isLoser,
+                wasEliminated,
+                lives: card.lives,
+                card: card.card
+            });
+        }
+
+        // Controlla se la partita è finita
+        const gameOver = assoManager.checkGameOver(pin);
+        if (gameOver.gameOver) {
+            setTimeout(() => {
+                io.to(`asso-host:${pin}`).emit('asso:game-over', {
+                    winner: gameOver.winner,
+                    standings: gameOver.finalStandings
+                });
+                io.to(`asso-game:${pin}`).emit('asso:game-over', {
+                    winner: gameOver.winner,
+                    standings: gameOver.finalStandings
+                });
+            }, 3000);
+        } else {
+            // Notifica che si può iniziare il prossimo round
+            setTimeout(() => {
+                io.to(`asso-host:${pin}`).emit('asso:ready-for-next-round');
+            }, 3000);
+        }
+    }, 3000);
+}
+
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
     console.log(`Quiz Arena server in esecuzione su http://localhost:${PORT}`);
+    logger.general.serverStarted(PORT);
 });

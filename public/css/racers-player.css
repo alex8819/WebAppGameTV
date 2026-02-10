@@ -21,6 +21,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, var(--race-dark) 0%, var(--race-darker) 100%);
     min-height: 100vh;
+    min-height: 100dvh;
     color: white;
     overflow: hidden;
     user-select: none;
@@ -29,12 +30,74 @@ body {
 .controller-container {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
 }
 
 .hidden {
     display: none !important;
+}
+
+/* Rotate phone overlay - shows in portrait mode */
+.rotate-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--race-darker);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    text-align: center;
+    padding: 20px;
+}
+
+.rotate-icon {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    animation: rotatePhone 2s ease-in-out infinite;
+}
+
+@keyframes rotatePhone {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-20deg); }
+    75% { transform: rotate(20deg); }
+}
+
+.rotate-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--race-yellow);
+}
+
+.rotate-subtext {
+    font-size: 1rem;
+    opacity: 0.7;
+    margin-top: 10px;
+}
+
+/* Show overlay only in portrait mode */
+@media screen and (orientation: portrait) {
+    .rotate-overlay {
+        display: flex;
+    }
+    .controller-container {
+        display: none;
+    }
+}
+
+@media screen and (orientation: landscape) {
+    .rotate-overlay {
+        display: none;
+    }
+    .controller-container {
+        display: flex;
+    }
 }
 
 /* Join Screen */
@@ -189,6 +252,20 @@ body {
     border-radius: 50%;
 }
 
+.lobby-timer {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--race-yellow);
+    margin-bottom: 10px;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.lobby-timer span {
+    font-size: 1.6rem;
+    color: var(--race-red);
+}
+
 .waiting-message {
     text-align: center;
     opacity: 0.6;
@@ -229,121 +306,32 @@ body {
     margin-top: 20px;
 }
 
-/* Race Controls Screen */
+/* Race Controls Screen - Landscape Layout */
 #race-screen {
     flex: 1;
     display: flex;
-    flex-direction: column;
-    padding: 15px;
+    padding: 8px;
 }
 
-.race-hud {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 15px;
-}
-
-.hud-item {
-    text-align: center;
-}
-
-.hud-label {
-    font-size: 0.8rem;
-    opacity: 0.7;
-    margin-bottom: 5px;
-}
-
-.hud-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--race-yellow);
-}
-
-.steering-indicator {
-    margin-bottom: 15px;
-}
-
-.steering-bar {
-    height: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-}
-
-.steering-marker {
-    position: absolute;
-    top: 2px;
-    left: 50%;
-    width: 30px;
-    height: 16px;
-    background: var(--race-yellow);
-    border-radius: 8px;
-    transform: translateX(-50%);
-    transition: left 0.1s ease-out;
-}
-
-.steering-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 1.5rem;
-    margin-top: 5px;
-}
-
-.powerup-slot {
-    height: 80px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 15px;
-    border: 3px dashed rgba(255, 255, 255, 0.2);
-}
-
-.powerup-slot.has-powerup {
-    border: 3px solid var(--race-yellow);
-    background: rgba(241, 196, 15, 0.2);
-    cursor: pointer;
-}
-
-.powerup-content {
-    text-align: center;
-}
-
-.powerup-icon {
-    font-size: 2.5rem;
-}
-
-.powerup-name {
-    font-size: 0.9rem;
-    margin-top: 5px;
-}
-
-.powerup-hint {
-    opacity: 0.5;
-    font-size: 0.9rem;
-}
-
-.controls-area {
+.race-layout {
     flex: 1;
     display: flex;
-    gap: 20px;
-    min-height: 200px;
+    gap: 10px;
 }
 
-.brake-pedal, .gas-pedal {
-    flex: 1;
+/* Pedals - Left and Right */
+.pedal {
+    width: 30%;
     border: none;
     border-radius: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.1s;
+    color: white;
 }
 
 .brake-pedal {
@@ -354,41 +342,163 @@ body {
     background: linear-gradient(180deg, #27ae60, #2ecc71);
 }
 
-.brake-pedal:active, .gas-pedal:active {
+.pedal:active {
     transform: scale(0.95);
 }
 
 .brake-pedal.active {
     background: linear-gradient(180deg, #922b21, #c0392b);
-    box-shadow: 0 0 30px rgba(192, 57, 43, 0.5);
+    box-shadow: 0 0 40px rgba(192, 57, 43, 0.6);
 }
 
 .gas-pedal.active {
     background: linear-gradient(180deg, #1e8449, #27ae60);
-    box-shadow: 0 0 30px rgba(39, 174, 96, 0.5);
+    box-shadow: 0 0 40px rgba(39, 174, 96, 0.6);
 }
 
 .pedal-icon {
-    font-size: 3rem;
+    font-size: 4rem;
     margin-bottom: 10px;
 }
 
 .pedal-label {
-    font-size: 1rem;
-    letter-spacing: 2px;
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+}
+
+/* Center Panel */
+.center-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding: 5px 0;
+}
+
+.race-hud {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+.calibrate-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid var(--race-yellow);
+    color: var(--race-yellow);
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calibrate-btn:active {
+    background: var(--race-yellow);
+    color: var(--race-dark);
+}
+
+.calibrate-btn.calibrated {
+    background: var(--race-green);
+    border-color: var(--race-green);
+    color: white;
+}
+
+.hud-item {
+    text-align: center;
+}
+
+.hud-label {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.hud-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--race-yellow);
+}
+
+.powerup-slot {
+    height: 55px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px dashed rgba(255, 255, 255, 0.2);
+}
+
+.powerup-slot.has-powerup {
+    border: 3px solid var(--race-yellow);
+    background: rgba(241, 196, 15, 0.2);
+    cursor: pointer;
+    animation: powerupGlow 1s infinite;
+}
+
+@keyframes powerupGlow {
+    0%, 100% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
+    50% { box-shadow: 0 0 25px rgba(241, 196, 15, 0.6); }
+}
+
+.powerup-content {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.powerup-icon {
+    font-size: 1.6rem;
+}
+
+.powerup-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.powerup-hint {
+    opacity: 0.5;
+    font-size: 0.85rem;
+}
+
+.steering-indicator {
+    margin: 3px 0;
+}
+
+.steering-bar {
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.steering-marker {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    width: 20px;
+    height: 8px;
+    background: var(--race-yellow);
+    border-radius: 4px;
+    transform: translateX(-50%);
+    transition: left 0.1s ease-out;
 }
 
 .status-effects {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin-top: 15px;
+    gap: 6px;
 }
 
 .status-effect {
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 0.9rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
     animation: effectPulse 0.5s infinite;
 }
 

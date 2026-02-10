@@ -35,6 +35,23 @@ const gasPedal = document.getElementById('gas-pedal');
 const brakePedal = document.getElementById('brake-pedal');
 const powerupSlot = document.getElementById('powerup-slot');
 const steeringMarker = document.getElementById('steering-marker');
+const calibrateBtn = document.getElementById('calibrate-btn');
+
+// Current raw tilt for calibration
+let currentRawTilt = 0;
+
+// Debounce for powerup use
+let lastPowerupUse = 0;
+let powerupPickupTime = 0;
+
+// Debug: track socket connection
+socket.on('connect', () => {
+    console.log('Socket connected:', socket.id);
+});
+
+socket.on('disconnect', () => {
+    console.log('Socket disconnected');
+});
 
 // Initialize
 function init() {
@@ -136,6 +153,37 @@ function setupTouchControls() {
         e.preventDefault();
         usePowerup();
     });
+
+    // Calibrate button
+    if (calibrateBtn) {
+        calibrateBtn.addEventListener('click', calibrateSteering);
+        calibrateBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            calibrateSteering();
+        });
+    }
+}
+
+function calibrateSteering() {
+    // Set current tilt as the new center point
+    baseOrientation = currentRawTilt;
+    steering = 0;
+    updateSteeringIndicator();
+
+    // Visual feedback
+    if (calibrateBtn) {
+        calibrateBtn.textContent = '✓ OK!';
+        calibrateBtn.classList.add('calibrated');
+        setTimeout(() => {
+            calibrateBtn.textContent = '🎯 CALIBRA';
+            calibrateBtn.classList.remove('calibrated');
+        }, 1000);
+    }
+
+    // Vibrate feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
 }
 
 function setupOrientationControls() {
@@ -167,24 +215,49 @@ async function requestOrientationPermission() {
 
 function startOrientationTracking() {
     window.addEventListener('deviceorientation', handleOrientation);
+
+    // Reset calibration when orientation changes
+    window.addEventListener('orientationchange', () => {
+        baseOrientation = 0;
+    });
 }
 
 function handleOrientation(event) {
+    // Get screen orientation to determine which axis to use
+    const screenOrientation = window.screen.orientation?.angle || window.orientation || 0;
+
+    let tilt;
+
+    // In landscape mode, use beta (front/back tilt becomes left/right)
+    // Adjust based on which way the phone is rotated
+    if (Math.abs(screenOrientation) === 90) {
+        // Landscape mode - use beta
+        tilt = event.beta || 0;
+        // Flip direction based on landscape-left vs landscape-right
+        if (screenOrientation === -90 || screenOrientation === 270) {
+            tilt = -tilt;
+        }
+    } else {
+        // Portrait mode - use gamma
+        tilt = event.gamma || 0;
+    }
+
+    // Save raw tilt for calibration button
+    currentRawTilt = tilt;
+
+    // Don't process steering if not racing
     if (!isRacing || hasFinished) return;
 
-    // Use gamma for left/right tilt (in landscape mode)
-    // gamma ranges from -90 to 90
-    let tilt = event.gamma || 0;
-
-    // Calibrate on first reading
+    // Auto-calibrate on first reading
     if (baseOrientation === 0 && tilt !== 0) {
         baseOrientation = tilt;
     }
 
     // Calculate steering from tilt (normalized to -1 to 1)
-    // Tilt range: -30 to 30 degrees for full steering
-    tilt = tilt - baseOrientation;
-    steering = Math.max(-1, Math.min(1, tilt / 30));
+    // Tilt range: -25 to 25 degrees for full steering
+    // Inverted so tilt-left = steer-left
+    const adjustedTilt = tilt - baseOrientation;
+    steering = Math.max(-1, Math.min(1, -adjustedTilt / 25));
 
     // Update visual indicator
     updateSteeringIndicator();
@@ -268,6 +341,15 @@ function showScreen(screenName) {
 function usePowerup() {
     if (!currentPowerup || !isRacing) return;
 
+    const now = Date.now();
+
+    // Prevent accidental use right after pickup (300ms grace period)
+    if (now - powerupPickupTime < 300) return;
+
+    // Debounce - prevent accidental double-tap (500ms)
+    if (now - lastPowerupUse < 500) return;
+    lastPowerupUse = now;
+
     socket.emit('racers:use-powerup', { pin: gamePin });
     currentPowerup = null;
     updatePowerupDisplay();
@@ -310,6 +392,15 @@ socket.on('racers:lobby-update', (data) => {
     updatePlayersList(data.players);
 });
 
+socket.on('racers:lobby-timer', (data) => {
+    const timerEl = document.getElementById('lobby-timer');
+    const timerValue = document.getElementById('lobby-timer-value');
+    if (timerEl && timerValue) {
+        timerEl.classList.remove('hidden');
+        timerValue.textContent = data.remaining;
+    }
+});
+
 socket.on('racers:countdown', (data) => {
     showScreen('countdown');
     const countdownNumber = document.getElementById('countdown-number');
@@ -336,22 +427,40 @@ socket.on('racers:go', () => {
 });
 
 socket.on('racers:player-state', (state) => {
-    if (!isRacing) return;
+    // Debug: flash position indicator to show we're receiving updates
+    const posElement = document.getElementById('position');
+    if (posElement && state.position) {
+        posElement.textContent = state.position;
+    }
+
+    if (!isRacing) {
+        console.log('Received player-state but isRacing is false');
+        return;
+    }
 
     // Update HUD
     document.getElementById('current-lap').textContent = state.lap;
     document.getElementById('total-laps').textContent = state.totalLaps;
     document.getElementById('speed').textContent = Math.round(state.speed * 15);
 
-    // Update powerup
-    if (state.powerup && (!currentPowerup || currentPowerup.id !== state.powerup.id)) {
-        currentPowerup = state.powerup;
-        updatePowerupDisplay();
-        // Vibrate on pickup
-        if (navigator.vibrate) {
-            navigator.vibrate(100);
+    // Debug: log powerup state
+    if (state.powerup) {
+        console.log('Server sent powerup:', state.powerup);
+    }
+
+    // Update powerup - simplified logic
+    if (state.powerup) {
+        if (!currentPowerup || currentPowerup.id !== state.powerup.id) {
+            currentPowerup = state.powerup;
+            powerupPickupTime = Date.now();
+            updatePowerupDisplay();
+            console.log('Powerup display updated:', currentPowerup);
+            // Vibrate on pickup
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
         }
-    } else if (!state.powerup && currentPowerup) {
+    } else if (currentPowerup) {
         currentPowerup = null;
         updatePowerupDisplay();
     }

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirinto Invisibile - Host</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/maze-host.css">
+</head>
+<body>
+    <div class="maze-container">
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen">
+            <div class="lobby-header">
+                <h1 class="game-title">Labirinto Invisibile</h1>
+                <div class="maze-icons">🧭 🌀 🏁</div>
+            </div>
+
+            <div class="pin-section">
+                <div class="pin-label">CODICE PARTITA</div>
+                <div class="pin-display" id="game-pin">----</div>
+                <div class="pin-hint">Inserisci questo codice sul telefono</div>
+            </div>
+
+            <div class="teams-section">
+                <h3>Squadre <span id="teams-count">(0/6)</span></h3>
+                <div class="teams-grid" id="teams-grid">
+                    <!-- Teams will be added here -->
+                </div>
+            </div>
+
+            <button id="btn-start" class="btn-start" disabled>
+                INIZIA PARTITA
+            </button>
+            <div class="start-hint" id="start-hint">In attesa di squadre complete...</div>
+        </div>
+
+        <!-- Countdown Screen -->
+        <div id="countdown-screen" class="screen hidden">
+            <div class="countdown-number" id="countdown-number">3</div>
+            <div class="countdown-text">Preparati!</div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div class="header-left">
+                    <div class="timer-display">
+                        <span class="timer-icon">⏱️</span>
+                        <span class="timer-value" id="timer-value">00:00</span>
+                    </div>
+                </div>
+                <div class="header-center">
+                    <h2>Labirinto Invisibile</h2>
+                </div>
+                <div class="header-right">
+                    <div class="teams-status" id="teams-status">
+                        <!-- Team status indicators -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-area">
+                <canvas id="maze-canvas"></canvas>
+            </div>
+
+            <div class="game-footer">
+                <div class="legend">
+                    <span class="legend-item"><span class="legend-icon start">🟢</span> Partenza</span>
+                    <span class="legend-item"><span class="legend-icon end">🏁</span> Arrivo</span>
+                    <span class="legend-item"><span class="legend-icon">🌀</span> Teletrasporto</span>
+                    <span class="legend-item"><span class="legend-icon">🕸️</span> Rallentamento</span>
+                    <span class="legend-item"><span class="legend-icon">🚧</span> Muro Mobile</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Winner Screen -->
+        <div id="winner-screen" class="screen hidden">
+            <div class="winner-content">
+                <div class="winner-trophy">🏆</div>
+                <h1 class="winner-title">VITTORIA!</h1>
+                <div class="winner-team" id="winner-team">
+                    <div class="winner-team-name" id="winner-team-name">Squadra</div>
+                    <div class="winner-players">
+                        <span id="winner-navigator">👀 Navigatore</span>
+                        <span id="winner-pilot">🎮 Pilota</span>
+                    </div>
+                    <div class="winner-time" id="winner-time">00:00</div>
+                </div>
+
+                <button class="btn-restart" onclick="location.reload()">
+                    NUOVA PARTITA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/maze-host.js"></script>
+</body>
+</html>

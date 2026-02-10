@@ -1,5 +1,7 @@
 // Elemental Clash Game Manager
 
+const logger = require('./logger');
+
 const games = new Map();
 
 // Mini-game types
@@ -137,6 +139,7 @@ function createGame(hostSocketId) {
     };
 
     games.set(pin, game);
+    logger.elemental.gameCreated(pin, hostSocketId);
     return { pin, gameId: pin };
 }
 
@@ -185,6 +188,8 @@ function joinGame(pin, nickname, socketId, avatar, element) {
 
     game.players.set(socketId, player);
 
+    logger.elemental.playerJoined(pin, nickname, element, avatar);
+
     return { player };
 }
 
@@ -214,6 +219,8 @@ function startGame(pin) {
 
     game.status = 'playing';
     game.round = 1;
+
+    logger.elemental.gameStarted(pin, game.players.size);
 
     // Assign positions in a circle
     const players = Array.from(game.players.values());
@@ -262,6 +269,9 @@ function shufflePositions(pin) {
 
     // Sort players by new position
     alivePlayers.sort((a, b) => a.position - b.position);
+
+    // LOG: Traccia shuffle posizioni
+    logger.elemental.positionsShuffled(pin, game.round);
 
     return shuffleData;
 }
@@ -589,6 +599,10 @@ function resolveRound(pin) {
     // Clear actions for next round
     game.currentActions.clear();
 
+    // LOG: Traccia azioni e risultati round
+    logger.elemental.roundActions(pin, game.round - 1, actionAnimations);
+    logger.elemental.roundResults(pin, game.round - 1, eliminations, remainingPlayers.length);
+
     return {
         round: game.round - 1,
         results,
@@ -647,6 +661,9 @@ function endGame(pin) {
 
     game.status = 'finished';
 
+    // Trova il vincitore per il log
+    const winner = Array.from(game.players.values()).find(p => p.isAlive);
+
     // Calculate rankings
     const rankings = Array.from(game.players.values())
         .sort((a, b) => {
@@ -667,6 +684,9 @@ function endGame(pin) {
             stats: p.stats
         }));
 
+    // LOG: Traccia fine partita
+    logger.elemental.gameEnded(pin, winner, rankings);
+
     return { rankings };
 }
 
@@ -682,12 +702,16 @@ function deleteGame(pin) {
 function leaveGame(socketId) {
     for (const [pin, game] of games) {
         if (game.hostSocketId === socketId) {
+            // LOG: Traccia disconnessione host
+            logger.elemental.playerDisconnected(pin, 'HOST', true);
             deleteGame(pin);
             return { pin, isHost: true };
         }
 
         const player = game.players.get(socketId);
         if (player) {
+            // LOG: Traccia disconnessione giocatore
+            logger.elemental.playerDisconnected(pin, player.nickname, false);
             game.players.delete(socketId);
             return { pin, isHost: false, player };
         }
@@ -902,6 +926,9 @@ function startMiniGame(pin) {
     }
 
     game.currentMiniGame = miniGameData;
+
+    // LOG: Traccia mini-gioco avviato
+    logger.elemental.miniGameStarted(pin, game.round, miniGameType.id, miniGameType.name);
 
     return miniGameData;
 }
@@ -1196,6 +1223,9 @@ function resolveMiniGame(pin) {
     }
 
     game.phase = 'action';
+
+    // LOG: Traccia risultati mini-gioco
+    logger.elemental.miniGameResults(pin, game.round, miniGame.type, rankings);
 
     return {
         miniGameType: miniGame.type,

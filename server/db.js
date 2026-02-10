@@ -56,6 +56,10 @@ db.exec(`
     );
 `);
 
+// Traccia domande usate di recente (ultime N partite)
+const recentlyUsedQuestions = new Set();
+const MAX_RECENT_QUESTIONS = 200; // Ricorda le ultime 200 domande usate
+
 // Query preparate
 const queries = {
     // Games
@@ -71,14 +75,69 @@ const queries = {
     updatePlayerAbilities: db.prepare('UPDATE players SET abilities_used = ? WHERE id = ?'),
     setPlayerConnected: db.prepare('UPDATE players SET connected = ? WHERE id = ?'),
 
-    // Questions
+    // Questions - query base
     getRandomQuestions: db.prepare('SELECT * FROM questions ORDER BY RANDOM() LIMIT ?'),
+    getRandomQuestionsExcluding: null, // Preparata dinamicamente
     countQuestions: db.prepare('SELECT COUNT(*) as count FROM questions'),
     insertQuestion: db.prepare('INSERT INTO questions (text, option_a, option_b, option_c, option_d, correct_answer, category, difficulty) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'),
 
     // History
     addHistory: db.prepare('INSERT INTO game_history (game_id, player_id, question_id, answer, correct, points_earned, response_time_ms, ability_used, ability_target_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
 };
+
+// Funzione per ottenere domande evitando quelle recenti
+function getSmartRandomQuestions(limit) {
+    const totalQuestions = queries.countQuestions.get().count;
+
+    // Se abbiamo poche domande o troppe recenti, resetta
+    if (recentlyUsedQuestions.size > totalQuestions - limit - 50) {
+        console.log(`[QUESTIONS] Reset domande recenti (${recentlyUsedQuestions.size} usate su ${totalQuestions} totali)`);
+        recentlyUsedQuestions.clear();
+    }
+
+    let questions;
+
+    if (recentlyUsedQuestions.size > 0) {
+        // Escludi le domande usate di recente
+        const excludeIds = Array.from(recentlyUsedQuestions);
+        const placeholders = excludeIds.map(() => '?').join(',');
+        const stmt = db.prepare(`SELECT * FROM questions WHERE id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT ?`);
+        questions = stmt.all(...excludeIds, limit);
+
+        // Se non abbastanza domande, prendi anche dalle recenti
+        if (questions.length < limit) {
+            console.log(`[QUESTIONS] Solo ${questions.length} domande non recenti, aggiungo dalle recenti`);
+            const needed = limit - questions.length;
+            const usedIds = questions.map(q => q.id);
+            const allExclude = [...usedIds];
+            const morePlaceholders = allExclude.map(() => '?').join(',');
+            const moreStmt = db.prepare(`SELECT * FROM questions WHERE id NOT IN (${morePlaceholders}) ORDER BY RANDOM() LIMIT ?`);
+            const moreQuestions = moreStmt.all(...allExclude, needed);
+            questions = [...questions, ...moreQuestions];
+        }
+    } else {
+        // Nessuna domanda recente, usa random normale
+        questions = queries.getRandomQuestions.all(limit);
+    }
+
+    // Registra queste domande come usate
+    for (const q of questions) {
+        recentlyUsedQuestions.add(q.id);
+    }
+
+    // Limita la dimensione del set
+    if (recentlyUsedQuestions.size > MAX_RECENT_QUESTIONS) {
+        const toRemove = recentlyUsedQuestions.size - MAX_RECENT_QUESTIONS;
+        const iterator = recentlyUsedQuestions.values();
+        for (let i = 0; i < toRemove; i++) {
+            recentlyUsedQuestions.delete(iterator.next().value);
+        }
+    }
+
+    console.log(`[QUESTIONS] Selezionate ${questions.length} domande, ${recentlyUsedQuestions.size} in memoria recente`);
+
+    return questions;
+}
 
 // Genera un PIN unico di 4 cifre
 function generateUniquePin() {
@@ -132,4 +191,4 @@ function seedQuestions() {
 
 seedQuestions();
 
-module.exports = { db, queries, generateUniquePin };
+module.exports = { db, queries, generateUniquePin, getSmartRandomQuestions };

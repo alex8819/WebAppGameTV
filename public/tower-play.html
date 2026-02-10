@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Citadel Guardians - Gioca</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/tower-player.css">
+</head>
+<body>
+    <div class="player-container">
+        <!-- Join Screen -->
+        <div id="join-screen" class="screen">
+            <h1 class="title">Citadel Guardians</h1>
+            <div class="towers-icons">🏹 🔮 ⚔️ 💥</div>
+
+            <div class="join-form">
+                <input type="text" id="pin-input" placeholder="PIN" maxlength="4" inputmode="numeric">
+                <input type="text" id="nickname-input" placeholder="Il tuo nome" maxlength="12">
+
+                <div class="avatar-section">
+                    <div class="avatar-label">Scegli avatar</div>
+                    <div class="avatar-grid" id="avatar-grid">
+                        <button class="avatar-btn selected" data-avatar="🛡️">🛡️</button>
+                        <button class="avatar-btn" data-avatar="⚔️">⚔️</button>
+                        <button class="avatar-btn" data-avatar="🏹">🏹</button>
+                        <button class="avatar-btn" data-avatar="🔮">🔮</button>
+                        <button class="avatar-btn" data-avatar="🗡️">🗡️</button>
+                        <button class="avatar-btn" data-avatar="🪓">🪓</button>
+                    </div>
+                </div>
+
+                <button id="btn-join" class="btn-primary">ENTRA</button>
+                <div class="error-message" id="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen hidden">
+            <div class="lobby-info">
+                <div class="my-zone" id="my-zone">ZONA 1</div>
+                <div class="my-avatar" id="my-avatar">🛡️</div>
+                <div class="my-name" id="my-name">Player</div>
+            </div>
+
+            <div class="waiting-message">
+                In attesa che l'host avvii la partita...
+            </div>
+
+            <div class="other-players">
+                <h3>Altri Guardiani</h3>
+                <div id="other-players-list"></div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div class="header-info">
+                    <div class="gold-display">
+                        <span class="gold-icon">💰</span>
+                        <span class="gold-amount" id="gold-amount">200</span>
+                    </div>
+                    <div class="wave-display">
+                        Wave <span id="wave-number">0</span>/10
+                    </div>
+                </div>
+                <div class="phase-badge" id="phase-badge">COSTRUZIONE</div>
+            </div>
+
+            <!-- Zone View -->
+            <div class="zone-view" id="zone-view">
+                <div class="zone-label">La tua zona</div>
+                <div class="slots-grid" id="slots-grid">
+                    <!-- Tower slots will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Tower Selection Panel (when slot selected) -->
+            <div class="tower-panel hidden" id="tower-panel">
+                <div class="panel-header">
+                    <span id="panel-title">Costruisci Torretta</span>
+                    <button class="btn-close" id="btn-close-panel">✕</button>
+                </div>
+
+                <!-- Build options (empty slot) -->
+                <div class="build-options" id="build-options">
+                    <button class="tower-btn" data-tower="sentinel">
+                        <span class="tower-emoji">🏹</span>
+                        <span class="tower-name">Sentinel</span>
+                        <span class="tower-cost">💰 100</span>
+                        <span class="tower-desc">Veloce, singolo</span>
+                    </button>
+                    <button class="tower-btn" data-tower="arcane">
+                        <span class="tower-emoji">🔮</span>
+                        <span class="tower-name">Arcane Spire</span>
+                        <span class="tower-cost">💰 150</span>
+                        <span class="tower-desc">Area, magico</span>
+                    </button>
+                    <button class="tower-btn" data-tower="barracks">
+                        <span class="tower-emoji">⚔️</span>
+                        <span class="tower-name">Vanguard Post</span>
+                        <span class="tower-cost">💰 125</span>
+                        <span class="tower-desc">Spawna soldati</span>
+                    </button>
+                    <button class="tower-btn" data-tower="cannon">
+                        <span class="tower-emoji">💥</span>
+                        <span class="tower-name">Thunder Cannon</span>
+                        <span class="tower-cost">💰 200</span>
+                        <span class="tower-desc">Devastante, lento</span>
+                    </button>
+                </div>
+
+                <!-- Upgrade options (occupied slot) -->
+                <div class="upgrade-options hidden" id="upgrade-options">
+                    <div class="tower-info">
+                        <span class="tower-emoji" id="current-tower-emoji">🏹</span>
+                        <span class="tower-name" id="current-tower-name">Sentinel</span>
+                        <div class="tower-level" id="current-tower-level">★☆☆</div>
+                    </div>
+                    <div class="upgrade-buttons">
+                        <button class="btn-upgrade" id="btn-upgrade">
+                            POTENZIA
+                            <span class="upgrade-cost" id="upgrade-cost">💰 75</span>
+                        </button>
+                        <button class="btn-sell" id="btn-sell">
+                            VENDI
+                            <span class="sell-refund" id="sell-refund">💰 60</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ready Button -->
+            <div class="ready-section" id="ready-section">
+                <button class="btn-ready" id="btn-ready">PRONTO!</button>
+                <div class="ready-status" id="ready-status">0/0 pronti</div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen hidden">
+            <div class="gameover-icon" id="gameover-icon">🏆</div>
+            <h1 class="gameover-title" id="gameover-title">VITTORIA!</h1>
+            <p class="gameover-message" id="gameover-message">La cittadella è salva!</p>
+
+            <div class="my-stats">
+                <div class="stat">
+                    <span class="stat-label">Kills</span>
+                    <span class="stat-value" id="my-kills">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Danni</span>
+                    <span class="stat-value" id="my-damage">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Torrette</span>
+                    <span class="stat-value" id="my-towers">0</span>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="location.reload()">GIOCA ANCORA</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/tower-player.js"></script>
+</body>
+</html>

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cucù - Host</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+            min-height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* LOBBY */
+        .lobby-screen {
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .game-title {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+        }
+
+        .game-subtitle {
+            font-size: 1.5rem;
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+
+        .pin-display {
+            background: rgba(255,255,255,0.15);
+            padding: 1.5rem 3rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .pin-label {
+            font-size: 1rem;
+            opacity: 0.7;
+            margin-bottom: 0.5rem;
+        }
+
+        .pin-code {
+            font-size: 4rem;
+            font-weight: bold;
+            letter-spacing: 0.5rem;
+            font-family: monospace;
+        }
+
+        .players-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            max-width: 800px;
+        }
+
+        .player-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .player-lives {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .life {
+            font-size: 1rem;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #1a472a;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-start:hover {
+            transform: scale(1.05);
+        }
+        .btn-start:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* LOBBY COUNTDOWN */
+        .lobby-countdown {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+
+        .countdown-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .countdown-circle svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .countdown-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.2);
+            stroke-width: 8;
+        }
+
+        .countdown-progress {
+            fill: none;
+            stroke: #ffd700;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 283;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .countdown-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .countdown-label {
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .countdown-circle.warning .countdown-progress {
+            stroke: #ff6b6b;
+        }
+        .countdown-circle.warning .countdown-value {
+            color: #ff6b6b;
+            animation: pulse 0.5s infinite;
+        }
+
+        /* GAME TABLE */
+        .game-screen {
+            padding: 1rem;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 0.5rem;
+        }
+
+        .round-info {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .current-turn {
+            font-size: 1.25rem;
+            background: rgba(255,215,0,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .table-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .players-circle {
+            position: relative;
+            width: min(70vh, 90vw);
+            height: min(70vh, 90vw);
+            max-width: 800px;
+            max-height: 800px;
+        }
+
+        /* RESPONSIVE - Tablet/Mobile landscape */
+        @media (max-width: 1024px) {
+            .game-header {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .players-circle {
+                width: min(60vh, 85vw);
+                height: min(60vh, 85vw);
+            }
+            .seat-card {
+                width: 60px;
+                height: 90px;
+            }
+            .table-center {
+                width: 150px;
+                height: 150px;
+            }
+        }
+
+        /* RESPONSIVE - Mobile portrait */
+        @media (max-width: 768px) {
+            .game-title { font-size: 2.5rem; }
+            .pin-code { font-size: 2.5rem; }
+            .players-circle {
+                width: min(50vh, 80vw);
+                height: min(50vh, 80vw);
+            }
+            .seat-card {
+                width: 50px;
+                height: 75px;
+                font-size: 1.5rem;
+            }
+            .card-value { font-size: 1rem; }
+            .card-suit { font-size: 0.6rem; }
+            .seat-name { font-size: 0.7rem; padding: 0.15rem 0.5rem; }
+            .seat-lives .life { font-size: 0.8rem; }
+            .table-center {
+                width: 100px;
+                height: 100px;
+            }
+            .table-center div:first-child { font-size: 2rem; }
+            .deck-count { font-size: 1rem; }
+        }
+
+        .table-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #2d5a3d 0%, #1a472a 100%);
+            border-radius: 50%;
+            border: 4px solid #ffd700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .deck-count {
+            font-size: 1.5rem;
+            opacity: 0.8;
+        }
+
+        .player-seat {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .player-seat.current-turn-player {
+            transform: scale(1.1);
+        }
+
+        .player-seat.current-turn-player .seat-name {
+            background: #ffd700;
+            color: #1a472a;
+        }
+
+        .seat-card {
+            width: 80px;
+            height: 120px;
+            background: linear-gradient(135deg, #1a3a5c, #0d1f2d);
+            border: 3px solid #4a6fa5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+        }
+
+        .seat-card.revealed {
+            background: #fff;
+            border-color: #333;
+        }
+
+        .seat-card.revealed .card-value {
+            color: #333;
+        }
+
+        .seat-card.revealed.denari { border-color: #ffd700; }
+        .seat-card.revealed.coppe { border-color: #4169e1; }
+        .seat-card.revealed.bastoni { border-color: #228b22; }
+        .seat-card.revealed.spade { border-color: #333; }
+
+        .card-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .card-suit {
+            font-size: 0.8rem;
+        }
+
+        .seat-name {
+            background: rgba(255,255,255,0.15);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .seat-lives {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .seat-lives .life {
+            font-size: 1.25rem;
+        }
+
+        .player-seat.eliminated {
+            opacity: 0.4;
+        }
+
+        .player-seat.eliminated .seat-card {
+            background: #444;
+            border-color: #666;
+        }
+
+        /* ACTION LOG */
+        .action-log {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+            text-align: center;
+            min-width: 300px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .action-log.cucu {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #1a472a;
+            font-weight: bold;
+            font-size: 2rem;
+        }
+
+        /* COUNTDOWN */
+        .countdown-screen {
+            align-items: center;
+            justify-content: center;
+        }
+
+        .countdown-number {
+            font-size: 15rem;
+            font-weight: bold;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: pulse 1s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* RESULTS */
+        .results-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .results-title {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .loser-card {
+            background: #c0392b;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            margin: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .winner-display {
+            text-align: center;
+        }
+
+        .winner-crown {
+            font-size: 8rem;
+        }
+
+        .winner-name {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .final-standings {
+            margin-top: 2rem;
+        }
+
+        .standing-row {
+            display: flex;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.1);
+            margin: 0.25rem 0;
+            border-radius: 0.25rem;
+        }
+
+        .btn-next-round {
+            margin-top: 2rem;
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- LOBBY -->
+        <div id="lobby-screen" class="screen lobby-screen active">
+            <h1 class="game-title">Cucù</h1>
+            <p class="game-subtitle">Asso che Fugge</p>
+
+            <div class="pin-display">
+                <div class="pin-label">CODICE PARTITA</div>
+                <div class="pin-code" id="pin-code">----</div>
+            </div>
+
+            <div class="players-list" id="players-list"></div>
+
+            <div class="lobby-countdown" id="lobby-countdown" style="display: none;">
+                <div class="countdown-circle">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="countdown-bg" cx="50" cy="50" r="45"/>
+                        <circle class="countdown-progress" id="countdown-circle" cx="50" cy="50" r="45"/>
+                    </svg>
+                    <span class="countdown-value" id="lobby-countdown-value">50</span>
+                </div>
+                <p class="countdown-label">La partita inizia tra...</p>
+            </div>
+
+            <button class="btn-start" id="btn-start" disabled>
+                INIZIA SUBITO
+            </button>
+            <p id="waiting-msg" style="margin-top: 1rem; opacity: 0.7;">In attesa di almeno 2 giocatori...</p>
+        </div>
+
+        <!-- COUNTDOWN -->
+        <div id="countdown-screen" class="screen countdown-screen">
+            <div class="countdown-number" id="countdown-number">3</div>
+        </div>
+
+        <!-- GAME -->
+        <div id="game-screen" class="screen game-screen">
+            <div class="game-header">
+                <div class="round-info">Round <span id="round-number">1</span></div>
+                <div class="current-turn">Turno di: <strong id="current-player-name">---</strong></div>
+                <div id="dealer-badge" style="background: rgba(255,215,0,0.3); padding: 0.5rem 1rem; border-radius: 0.5rem;">
+                    Mazziere: <strong id="dealer-name">---</strong>
+                </div>
+            </div>
+
+            <div class="table-area">
+                <div class="players-circle" id="players-circle">
+                    <div class="table-center">
+                        <div style="font-size: 3rem;">🃏</div>
+                        <div class="deck-count"><span id="deck-count">--</span> carte</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTION LOG (shown during game) -->
+        <div id="action-log" class="action-log hidden"></div>
+
+        <!-- RESULTS OVERLAY -->
+        <div id="results-overlay" class="results-overlay hidden">
+            <div id="round-results">
+                <h2 class="results-title">Fine Round</h2>
+                <div id="losers-list"></div>
+                <button class="btn-next-round" id="btn-next-round">Prossimo Round</button>
+            </div>
+            <div id="game-over-results" class="hidden">
+                <div class="winner-display">
+                    <div class="winner-crown">👑</div>
+                    <div class="winner-name" id="winner-name">---</div>
+                    <p style="font-size: 1.5rem;">VINCITORE!</p>
+                </div>
+                <div class="final-standings" id="final-standings"></div>
+                <button class="btn-next-round" onclick="location.reload()">Nuova Partita</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        let gamePin = null;
+        let players = [];
+        let currentPlayerSocketId = null;
+        let dealerSocketId = null;
+
+        // Lobby countdown (synced from server)
+        const LOBBY_COUNTDOWN_SECONDS = 50;
+        let lobbyCountdown = LOBBY_COUNTDOWN_SECONDS;
+
+        // SUITS symbols
+        const SUIT_SYMBOLS = {
+            denari: '🪙',
+            coppe: '🏆',
+            bastoni: '🌿',
+            spade: '⚔️'
+        };
+
+        const SUIT_COLORS = {
+            denari: '#ffd700',
+            coppe: '#4169e1',
+            bastoni: '#228b22',
+            spade: '#333'
+        };
+
+        // Initialize
+        socket.emit('asso:create-game');
+
+        socket.on('asso:game-created', ({ pin }) => {
+            gamePin = pin;
+            document.getElementById('pin-code').textContent = pin;
+        });
+
+        socket.on('asso:player-joined', ({ players: p }) => {
+            players = p;
+            updatePlayersLobby();
+        });
+
+        // Server-side lobby countdown (synced for all clients)
+        socket.on('asso:lobby-countdown', ({ countdown }) => {
+            lobbyCountdown = countdown;
+            updateCountdownDisplay();
+
+            const countdownEl = document.getElementById('lobby-countdown');
+            if (players.length >= 1) {
+                countdownEl.style.display = 'flex';
+            }
+        });
+
+        function updatePlayersLobby() {
+            const list = document.getElementById('players-list');
+            list.innerHTML = players.map(p => `
+                <div class="player-badge">
+                    <span>${p.nickname}</span>
+                    <div class="player-lives">
+                        ${'❤️'.repeat(p.lives)}
+                    </div>
+                </div>
+            `).join('');
+
+            const btn = document.getElementById('btn-start');
+            const msg = document.getElementById('waiting-msg');
+            const countdownEl = document.getElementById('lobby-countdown');
+
+            if (players.length >= 2) {
+                btn.disabled = false;
+                msg.textContent = `${players.length} giocatori pronti!`;
+                countdownEl.style.display = 'flex';
+            } else if (players.length === 1) {
+                btn.disabled = true;
+                msg.textContent = 'In attesa di altri giocatori...';
+                countdownEl.style.display = 'flex';
+            } else {
+                btn.disabled = true;
+                msg.textContent = 'In attesa di almeno 2 giocatori...';
+                countdownEl.style.display = 'none';
+            }
+        }
+
+        function updateCountdownDisplay() {
+            const valueEl = document.getElementById('lobby-countdown-value');
+            const circleEl = document.getElementById('countdown-circle');
+            const containerEl = document.querySelector('.countdown-circle');
+
+            valueEl.textContent = lobbyCountdown;
+
+            // Calcola la percentuale per il cerchio SVG
+            const circumference = 2 * Math.PI * 45; // r=45
+            const offset = circumference * (1 - lobbyCountdown / LOBBY_COUNTDOWN_SECONDS);
+            circleEl.style.strokeDashoffset = offset;
+
+            // Warning quando sotto i 10 secondi
+            if (lobbyCountdown <= 10) {
+                containerEl.classList.add('warning');
+            } else {
+                containerEl.classList.remove('warning');
+            }
+        }
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            socket.emit('asso:start-game', { pin: gamePin });
+        });
+
+        socket.on('asso:game-starting', () => {
+            showScreen('countdown-screen');
+        });
+
+        socket.on('asso:countdown', ({ count }) => {
+            document.getElementById('countdown-number').textContent = count;
+        });
+
+        socket.on('asso:round-start', ({ roundNumber, dealerSocketId: dealer, currentPlayerSocketId: current, players: p }) => {
+            showScreen('game-screen');
+            document.getElementById('round-number').textContent = roundNumber;
+            players = p;
+            currentPlayerSocketId = current;
+            dealerSocketId = dealer;
+
+            const dealerPlayer = players.find(pl => pl.socketId === dealer);
+            document.getElementById('dealer-name').textContent = dealerPlayer?.nickname || '---';
+
+            updateTable();
+            updateCurrentPlayer();
+        });
+
+        socket.on('asso:turn-changed', ({ currentPlayerSocketId: current, players: p }) => {
+            if (p) players = p;
+            currentPlayerSocketId = current;
+            updateTable();
+            updateCurrentPlayer();
+        });
+
+        socket.on('asso:player-knocked', ({ nickname, players: p }) => {
+            if (p) players = p;
+            showAction(`${nickname} BUSSA`);
+            updateTable();
+        });
+
+        socket.on('asso:pass-blocked', ({ nickname, blockedBy, players: p }) => {
+            if (p) players = p;
+            showAction(`CUCÙ! ${blockedBy.nickname} blocca ${nickname}!`, true);
+            updateTable();
+        });
+
+        socket.on('asso:cards-swapped', ({ from, to, skipped, players: p }) => {
+            if (p) players = p;
+            let msg = `${from.nickname} passa a ${to.nickname}`;
+            if (skipped && skipped.length > 0) {
+                msg += ` (${skipped.map(s => s.nickname).join(', ')} saltato)`;
+            }
+            showAction(msg);
+            updateTable();
+        });
+
+        socket.on('asso:dealer-drew', ({ nickname, drewSpecial, card, players: p }) => {
+            if (p) players = p;
+            let msg = `${nickname} pesca dal mazzo`;
+            if (drewSpecial && card) {
+                msg += ` - ${card.name}!`;
+            }
+            showAction(msg);
+            updateTable();
+        });
+
+        socket.on('asso:card-revealed', ({ nickname, card }) => {
+            const player = players.find(p => p.nickname === nickname);
+            if (player) {
+                player.cardRevealed = true;
+                player.revealedCard = card;
+            }
+            updateTable();
+
+            if (card.isRe) {
+                showAction(`CUCÙ! ${nickname} ha il RE!`, true);
+            } else if (card.isCavallo) {
+                showAction(`${nickname} ha il CAVALLO - SALTA!`);
+            }
+        });
+
+        socket.on('asso:reveal-cards', ({ cards }) => {
+            // Show all cards on table
+            for (const c of cards) {
+                const player = players.find(p => p.socketId === c.socketId);
+                if (player) {
+                    player.cardRevealed = true;
+                    player.revealedCard = c.card;
+                }
+            }
+            updateTable();
+        });
+
+        socket.on('asso:round-result', ({ losers, lowestCardName, eliminatedThisRound, players: p }) => {
+            players = p;
+            updateTable();
+
+            const overlay = document.getElementById('results-overlay');
+            const roundResults = document.getElementById('round-results');
+            const gameOver = document.getElementById('game-over-results');
+
+            roundResults.classList.remove('hidden');
+            gameOver.classList.add('hidden');
+
+            const losersList = document.getElementById('losers-list');
+            losersList.innerHTML = `
+                <p style="margin-bottom: 1rem;">Carta più bassa: <strong>${lowestCardName}</strong></p>
+                ${losers.map(l => `
+                    <div class="loser-card">
+                        ${l.nickname} perde una vita!
+                        ${l.livesRemaining <= 0 ? '<br><strong>ELIMINATO!</strong>' : `(${l.livesRemaining} ❤️ rimaste)`}
+                    </div>
+                `).join('')}
+            `;
+
+            overlay.classList.remove('hidden');
+        });
+
+        socket.on('asso:ready-for-next-round', () => {
+            document.getElementById('btn-next-round').classList.remove('hidden');
+        });
+
+        document.getElementById('btn-next-round').addEventListener('click', () => {
+            document.getElementById('results-overlay').classList.add('hidden');
+            socket.emit('asso:next-round', { pin: gamePin });
+        });
+
+        socket.on('asso:game-over', ({ winner, standings }) => {
+            const overlay = document.getElementById('results-overlay');
+            const roundResults = document.getElementById('round-results');
+            const gameOver = document.getElementById('game-over-results');
+
+            roundResults.classList.add('hidden');
+            gameOver.classList.remove('hidden');
+
+            document.getElementById('winner-name').textContent = winner?.nickname || 'Nessuno';
+
+            const standingsEl = document.getElementById('final-standings');
+            standingsEl.innerHTML = standings.map((s, i) => `
+                <div class="standing-row">
+                    <span>${i + 1}°</span>
+                    <span>${s.nickname}</span>
+                    <span>${s.isEliminated ? '💀' : '❤️'.repeat(s.lives)}</span>
+                </div>
+            `).join('');
+
+            overlay.classList.remove('hidden');
+        });
+
+        function updateTable() {
+            const circle = document.getElementById('players-circle');
+            const alivePlayers = players.filter(p => !p.isEliminated);
+            const radius = 280;
+            const centerX = circle.offsetWidth / 2;
+            const centerY = circle.offsetHeight / 2;
+
+            // Clear existing seats (keep center)
+            const seats = circle.querySelectorAll('.player-seat');
+            seats.forEach(s => s.remove());
+
+            players.forEach((player, index) => {
+                const angle = (index / players.length) * 2 * Math.PI - Math.PI / 2;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                const seat = document.createElement('div');
+                seat.className = 'player-seat';
+                if (player.socketId === currentPlayerSocketId) {
+                    seat.classList.add('current-turn-player');
+                }
+                if (player.isEliminated) {
+                    seat.classList.add('eliminated');
+                }
+
+                seat.style.left = `${x}px`;
+                seat.style.top = `${y}px`;
+                seat.style.transform = 'translate(-50%, -50%)';
+
+                let cardContent = '🂠';
+                let cardClass = '';
+
+                if (player.cardRevealed && player.revealedCard) {
+                    const card = player.revealedCard;
+                    cardContent = `
+                        <div class="card-value">${card.name}</div>
+                        <div class="card-suit">${SUIT_SYMBOLS[card.suit]}</div>
+                    `;
+                    cardClass = `revealed ${card.suit}`;
+                }
+
+                seat.innerHTML = `
+                    <div class="seat-card ${cardClass}">${cardContent}</div>
+                    <div class="seat-name">${player.nickname}${player.socketId === dealerSocketId ? ' 🎴' : ''}</div>
+                    <div class="seat-lives">${'❤️'.repeat(player.lives)}${'🖤'.repeat(3 - player.lives)}</div>
+                `;
+
+                circle.appendChild(seat);
+            });
+        }
+
+        function updateCurrentPlayer() {
+            const player = players.find(p => p.socketId === currentPlayerSocketId);
+            document.getElementById('current-player-name').textContent = player?.nickname || '---';
+        }
+
+        function showAction(text, isCucu = false) {
+            const log = document.getElementById('action-log');
+            log.textContent = text;
+            log.className = 'action-log' + (isCucu ? ' cucu' : '');
+            log.classList.remove('hidden');
+
+            setTimeout(() => {
+                log.classList.add('hidden');
+            }, 3000);
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+    </script>
+</body>
+</html>

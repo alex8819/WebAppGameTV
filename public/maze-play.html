@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Labirinto Invisibile - Gioca</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/maze-player.css">
+</head>
+<body>
+    <div class="player-container">
+        <!-- Join Screen -->
+        <div id="join-screen" class="screen">
+            <h1 class="title">Labirinto Invisibile</h1>
+            <div class="maze-icons">🧭 🌀 🏁</div>
+
+            <div class="join-form">
+                <input type="text" id="pin-input" placeholder="PIN" maxlength="4" inputmode="numeric">
+                <input type="text" id="name-input" placeholder="Il tuo nome" maxlength="12">
+                <input type="text" id="team-input" placeholder="Nome squadra" maxlength="15">
+
+                <div class="role-section">
+                    <div class="role-label">Scegli il tuo ruolo</div>
+                    <div class="role-buttons">
+                        <button class="role-btn selected" data-role="pilot">
+                            <span class="role-icon">🎮</span>
+                            <span class="role-name">Pilota</span>
+                            <span class="role-desc">Giochi alla cieca</span>
+                        </button>
+                        <button class="role-btn" data-role="navigator">
+                            <span class="role-icon">👀</span>
+                            <span class="role-name">Navigatore</span>
+                            <span class="role-desc">Guida il pilota</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="btn-join" class="btn-primary">ENTRA</button>
+                <div class="error-message" id="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen hidden">
+            <div class="lobby-info">
+                <div class="my-team" id="my-team">Squadra</div>
+                <div class="my-role" id="my-role">🎮 Pilota</div>
+                <div class="my-name" id="my-name">Player</div>
+            </div>
+
+            <div class="team-status-lobby">
+                <div class="teammate-status" id="teammate-status">
+                    In attesa del compagno...
+                </div>
+            </div>
+
+            <div class="waiting-message">
+                In attesa che l'host avvii la partita...
+            </div>
+        </div>
+
+        <!-- Navigator Screen (watches TV) -->
+        <div id="navigator-screen" class="screen hidden">
+            <div class="navigator-content">
+                <div class="big-eye">👀</div>
+                <h2>Guarda la TV!</h2>
+                <p>Guida il tuo pilota attraverso il labirinto.</p>
+                <p class="navigator-hint">"Vai avanti... stop! Gira a destra..."</p>
+
+                <div class="timer-display">
+                    <span class="timer-icon">⏱️</span>
+                    <span class="timer-value" id="nav-timer">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pilot Screen (plays blind) -->
+        <div id="pilot-screen" class="screen hidden">
+            <div class="pilot-controls">
+                <!-- Direction buttons -->
+                <div class="control-grid">
+                    <div class="control-row">
+                        <button class="dir-btn" id="btn-up" data-dir="up">
+                            <span class="arrow">▲</span>
+                        </button>
+                    </div>
+                    <div class="control-row">
+                        <button class="dir-btn" id="btn-left" data-dir="left">
+                            <span class="arrow">◀</span>
+                        </button>
+                        <div class="center-indicator" id="center-indicator">
+                            <span class="pilot-icon">🎮</span>
+                        </div>
+                        <button class="dir-btn" id="btn-right" data-dir="right">
+                            <span class="arrow">▶</span>
+                        </button>
+                    </div>
+                    <div class="control-row">
+                        <button class="dir-btn" id="btn-down" data-dir="down">
+                            <span class="arrow">▼</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pilot-hint">Ascolta il navigatore e muoviti!</div>
+            </div>
+        </div>
+
+        <!-- Countdown Screen -->
+        <div id="countdown-screen" class="screen hidden">
+            <div class="countdown-number" id="countdown-number">3</div>
+            <div class="countdown-role" id="countdown-role">Preparati!</div>
+        </div>
+
+        <!-- Finished Screen -->
+        <div id="finished-screen" class="screen hidden">
+            <div class="finished-content">
+                <div class="finished-icon" id="finished-icon">🏆</div>
+                <h1 class="finished-title" id="finished-title">VITTORIA!</h1>
+                <p class="finished-message" id="finished-message">Avete completato il labirinto!</p>
+                <div class="finished-time" id="finished-time">00:00</div>
+                <button class="btn-primary" onclick="location.reload()">GIOCA ANCORA</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/maze-player.js"></script>
+</body>
+</html>

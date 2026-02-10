@@ -1,0 +1,427 @@
+/* Maze Game Host Styles */
+
+:root {
+    --maze-primary: #7c3aed;
+    --maze-secondary: #06b6d4;
+    --maze-dark: #1e3a5f;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #fff;
+    overflow: hidden;
+}
+
+.maze-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.screen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+/* ==================== LOBBY SCREEN ==================== */
+
+#lobby-screen {
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+}
+
+.lobby-header {
+    margin-bottom: 40px;
+}
+
+.game-title {
+    font-size: 4rem;
+    background: linear-gradient(135deg, var(--maze-primary) 0%, var(--maze-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+}
+
+.maze-icons {
+    font-size: 2.5rem;
+    letter-spacing: 10px;
+}
+
+.pin-section {
+    margin-bottom: 50px;
+}
+
+.pin-label {
+    font-size: 1rem;
+    color: #888;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+.pin-display {
+    font-size: 6rem;
+    font-weight: 700;
+    letter-spacing: 15px;
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.pin-hint {
+    font-size: 1rem;
+    color: #666;
+    margin-top: 10px;
+}
+
+.teams-section {
+    margin-bottom: 40px;
+    width: 100%;
+    max-width: 900px;
+}
+
+.teams-section h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #ccc;
+}
+
+.teams-grid {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.team-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px 25px;
+    min-width: 200px;
+    border: 3px solid;
+    transition: all 0.3s;
+}
+
+.team-card.ready {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.team-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.team-members {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.team-member {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.team-member.empty {
+    color: #666;
+    font-style: italic;
+}
+
+.team-member .role-icon {
+    font-size: 1.2rem;
+}
+
+.team-status {
+    margin-top: 15px;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.team-status.waiting {
+    background: rgba(255, 255, 255, 0.1);
+    color: #888;
+}
+
+.team-status.ready {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.btn-start {
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    border: none;
+    padding: 20px 60px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-start:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-start:not(:disabled):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+}
+
+.start-hint {
+    margin-top: 15px;
+    color: #666;
+    font-size: 1rem;
+}
+
+/* ==================== COUNTDOWN SCREEN ==================== */
+
+#countdown-screen {
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.2), transparent);
+}
+
+.countdown-number {
+    font-size: 15rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.countdown-text {
+    font-size: 2rem;
+    color: #888;
+    margin-top: 20px;
+}
+
+/* ==================== GAME SCREEN ==================== */
+
+#game-screen {
+    padding: 20px;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.header-left, .header-right {
+    flex: 1;
+}
+
+.header-right {
+    text-align: right;
+}
+
+.header-center {
+    flex: 2;
+    text-align: center;
+}
+
+.header-center h2 {
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.timer-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.timer-icon {
+    font-size: 1.5rem;
+}
+
+.timer-value {
+    font-family: 'Courier New', monospace;
+}
+
+.teams-status {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.team-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.team-indicator .team-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.team-indicator.finished {
+    background: rgba(34, 197, 94, 0.2);
+}
+
+.team-indicator.finished::after {
+    content: '🏁';
+    margin-left: 5px;
+}
+
+.game-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#maze-canvas {
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.game-footer {
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.legend-icon {
+    font-size: 1.2rem;
+}
+
+/* ==================== WINNER SCREEN ==================== */
+
+#winner-screen {
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.3), transparent);
+}
+
+.winner-content {
+    text-align: center;
+}
+
+.winner-trophy {
+    font-size: 8rem;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.winner-title {
+    font-size: 4rem;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 20px 0;
+}
+
+.winner-team {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 30px 50px;
+    margin-bottom: 30px;
+}
+
+.winner-team-name {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.winner-players {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    font-size: 1.2rem;
+    color: #ccc;
+    margin-bottom: 15px;
+}
+
+.winner-time {
+    font-size: 3rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: var(--maze-secondary);
+}
+
+.btn-restart {
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    border: none;
+    padding: 18px 50px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-restart:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+}

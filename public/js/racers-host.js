@@ -30,10 +30,17 @@ const totalLapsSpan = document.getElementById('total-laps');
 const raceStandings = document.getElementById('race-standings');
 const powerupNotifications = document.getElementById('powerup-notifications');
 
+// Canvas scale factor
+let canvasScale = 1;
+
 // Initialize
 function init() {
     canvas = document.getElementById('race-canvas');
     ctx = canvas.getContext('2d');
+
+    // Size canvas to fit viewport
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     // Create game on load
     socket.emit('racers:host-create');
@@ -43,6 +50,24 @@ function init() {
     document.getElementById('btn-new-race').addEventListener('click', () => {
         location.reload();
     });
+}
+
+function resizeCanvas() {
+    const container = canvas.parentElement;
+    const containerWidth = container.clientWidth - 40; // account for padding
+    const containerHeight = container.clientHeight - 40;
+
+    // Base canvas dimensions (game coordinate space)
+    const baseWidth = 800;
+    const baseHeight = 600;
+
+    // Calculate scale to fit container while maintaining aspect ratio
+    canvasScale = Math.min(containerWidth / baseWidth, containerHeight / baseHeight, 1.5);
+
+    canvas.width = baseWidth;
+    canvas.height = baseHeight;
+    canvas.style.width = Math.floor(baseWidth * canvasScale) + 'px';
+    canvas.style.height = Math.floor(baseHeight * canvasScale) + 'px';
 }
 
 // Socket Events
@@ -63,6 +88,13 @@ socket.on('racers:lobby-update', (data) => {
 
 socket.on('racers:player-left', (data) => {
     removePlayer(data.player);
+});
+
+socket.on('racers:lobby-timer', (data) => {
+    const timerEl = document.getElementById('lobby-timer');
+    const timerValue = document.getElementById('lobby-timer-value');
+    timerEl.classList.remove('hidden');
+    timerValue.textContent = data.remaining;
 });
 
 socket.on('racers:countdown', (data) => {
@@ -95,6 +127,12 @@ socket.on('racers:powerup-used', (data) => {
 socket.on('racers:race-finished', (data) => {
     stopRenderLoop();
     showResults(data.results);
+});
+
+socket.on('racers:error', (data) => {
+    console.error('Racers error:', data.message);
+    btnStartRace.disabled = false;
+    alert(data.message);
 });
 
 socket.on('racers:host-left', () => {
@@ -232,83 +270,112 @@ function drawTrack() {
     ctx.fillStyle = '#27ae60'; // Grass
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (!track || !track.segments) return;
+    if (!track) return;
 
-    // Draw track segments
-    ctx.strokeStyle = '#3d3d5c';
-    ctx.lineWidth = 80;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    // Draw oval track
+    const { centerX, centerY, radiusX, radiusY, trackWidth } = track;
+    const halfWidth = trackWidth / 2;
 
-    ctx.beginPath();
-    track.segments.forEach((seg, i) => {
-        if (i === 0) {
-            ctx.moveTo(seg.startX, seg.startY);
-        }
-        ctx.lineTo(seg.endX, seg.endY);
-    });
-    ctx.closePath();
-    ctx.stroke();
-
-    // Draw track border (darker)
+    // Draw outer edge (dark border)
     ctx.strokeStyle = '#2d2d4c';
-    ctx.lineWidth = 85;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    track.segments.forEach((seg, i) => {
-        if (i === 0) {
-            ctx.moveTo(seg.startX, seg.startY);
-        }
-        ctx.lineTo(seg.endX, seg.endY);
-    });
-    ctx.closePath();
+    ctx.ellipse(centerX, centerY, radiusX + halfWidth, radiusY + halfWidth, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Draw road surface
-    ctx.strokeStyle = '#5d5d7c';
-    ctx.lineWidth = 70;
+    // Draw track surface
+    ctx.fillStyle = '#5d5d7c';
     ctx.beginPath();
-    track.segments.forEach((seg, i) => {
-        if (i === 0) {
-            ctx.moveTo(seg.startX, seg.startY);
-        }
-        ctx.lineTo(seg.endX, seg.endY);
-    });
-    ctx.closePath();
+    ctx.ellipse(centerX, centerY, radiusX + halfWidth, radiusY + halfWidth, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw inner grass (cut out the middle)
+    ctx.fillStyle = '#27ae60';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radiusX - halfWidth, radiusY - halfWidth, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw inner edge (dark border)
+    ctx.strokeStyle = '#2d2d4c';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radiusX - halfWidth, radiusY - halfWidth, 0, 0, Math.PI * 2);
     ctx.stroke();
 
     // Draw center line (dashed)
-    ctx.strokeStyle = '#fff';
+    ctx.strokeStyle = '#ffffff50';
     ctx.lineWidth = 2;
-    ctx.setLineDash([20, 20]);
+    ctx.setLineDash([15, 15]);
     ctx.beginPath();
-    track.segments.forEach((seg, i) => {
-        if (i === 0) {
-            ctx.moveTo(seg.startX, seg.startY);
-        }
-        ctx.lineTo(seg.endX, seg.endY);
-    });
-    ctx.closePath();
+    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw start/finish line
+    // Draw start/finish line (on the right - VERTICAL, across the track width)
     if (track.startLine) {
-        const sl = track.startLine;
-        ctx.fillStyle = '#fff';
         ctx.save();
-        ctx.translate(sl.x, sl.y);
-        ctx.rotate(-sl.angle);
 
-        // Checkered pattern
+        // Position: right side of oval, centered on track
+        const startX = centerX + radiusX;
+        const startY = centerY;
+
+        // Draw checkered line across the full track width
         const size = 10;
-        for (let i = -4; i < 4; i++) {
-            for (let j = 0; j < 2; j++) {
-                ctx.fillStyle = (i + j) % 2 === 0 ? '#fff' : '#000';
-                ctx.fillRect(j * size - size, i * size, size, size);
+        const numRows = Math.ceil(trackWidth / size);
+
+        for (let row = -numRows / 2; row < numRows / 2; row++) {
+            for (let col = 0; col < 3; col++) {
+                ctx.fillStyle = (Math.floor(row) + col) % 2 === 0 ? '#fff' : '#000';
+                ctx.fillRect(
+                    startX - size * 1.5 + col * size,
+                    startY + row * size,
+                    size,
+                    size
+                );
             }
         }
+
+        // Draw "START/FINISH" banner
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(startX - 50, startY - halfWidth - 30, 100, 22);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏁 START', startX, startY - halfWidth - 14);
+
         ctx.restore();
     }
+
+    // Draw direction arrows on track (COUNTER-CLOCKWISE)
+    ctx.fillStyle = '#ffffff40';
+    const arrowAngles = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
+    for (const angle of arrowAngles) {
+        const x = centerX + Math.cos(angle) * radiusX;
+        const y = centerY + Math.sin(angle) * radiusY;
+        // Counter-clockwise tangent
+        const tangent = angle - Math.PI / 2;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-tangent);
+
+        // Arrow shape pointing in direction of travel
+        ctx.beginPath();
+        ctx.moveTo(20, 0);
+        ctx.lineTo(-8, -12);
+        ctx.lineTo(-3, 0);
+        ctx.lineTo(-8, 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Draw big arrow in center showing direction
+    ctx.fillStyle = '#ffffff20';
+    ctx.font = '60px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('↺', centerX, centerY); // Counter-clockwise arrow
 }
 
 function drawPowerups() {
@@ -366,59 +433,104 @@ function drawCars() {
         ctx.translate(player.x, player.y);
         ctx.rotate(-player.angle);
 
-        // Car body
+        // Car shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(2, 2, 18, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Car body (pointed front shape)
         ctx.fillStyle = player.color;
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
 
-        // Main body
+        // Main body with pointed nose
         ctx.beginPath();
-        ctx.roundRect(-20, -10, 40, 20, 5);
+        ctx.moveTo(25, 0);           // Nose point (FRONT)
+        ctx.lineTo(10, -10);         // Front corner top
+        ctx.lineTo(-18, -10);        // Back corner top
+        ctx.lineTo(-22, -6);         // Back edge top
+        ctx.lineTo(-22, 6);          // Back edge bottom
+        ctx.lineTo(-18, 10);         // Back corner bottom
+        ctx.lineTo(10, 10);          // Front corner bottom
+        ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Cockpit
-        ctx.fillStyle = '#333';
-        ctx.fillRect(-5, -6, 15, 12);
+        // White stripe on nose (makes front very clear)
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(25, 0);
+        ctx.lineTo(15, -5);
+        ctx.lineTo(15, 5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Cockpit (windshield)
+        ctx.fillStyle = '#1a1a2e';
+        ctx.beginPath();
+        ctx.moveTo(8, -6);
+        ctx.lineTo(-5, -6);
+        ctx.lineTo(-8, 6);
+        ctx.lineTo(8, 6);
+        ctx.closePath();
+        ctx.fill();
+
+        // Driver helmet
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
 
         // Wheels
         ctx.fillStyle = '#111';
-        ctx.fillRect(-18, -13, 8, 4);
-        ctx.fillRect(-18, 9, 8, 4);
-        ctx.fillRect(10, -13, 8, 4);
-        ctx.fillRect(10, 9, 8, 4);
+        ctx.fillRect(-16, -14, 10, 5);
+        ctx.fillRect(-16, 9, 10, 5);
+        ctx.fillRect(5, -14, 10, 5);
+        ctx.fillRect(5, 9, 10, 5);
 
-        // Boost effect
+        // Boost effect (flames from back)
         if (player.hasBoost) {
             ctx.fillStyle = '#ff6b35';
             ctx.beginPath();
-            ctx.moveTo(-20, 0);
-            ctx.lineTo(-35, -5);
-            ctx.lineTo(-30, 0);
-            ctx.lineTo(-35, 5);
+            ctx.moveTo(-22, 0);
+            ctx.lineTo(-40, -8);
+            ctx.lineTo(-32, 0);
+            ctx.lineTo(-40, 8);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#f1c40f';
+            ctx.beginPath();
+            ctx.moveTo(-22, 0);
+            ctx.lineTo(-32, -4);
+            ctx.lineTo(-28, 0);
+            ctx.lineTo(-32, 4);
             ctx.closePath();
             ctx.fill();
         }
 
-        // Stun effect
+        // Stun effect (spinning stars)
         if (player.isStunned) {
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 3; i++) {
-                const angle = (Date.now() / 100 + i * 2) % (Math.PI * 2);
-                ctx.beginPath();
-                ctx.arc(0, 0, 25, angle, angle + 0.5);
-                ctx.stroke();
+            ctx.fillStyle = '#f1c40f';
+            for (let i = 0; i < 4; i++) {
+                const angle = (Date.now() / 200 + i * Math.PI / 2) % (Math.PI * 2);
+                const starX = Math.cos(angle) * 20;
+                const starY = Math.sin(angle) * 20;
+                ctx.font = '12px Arial';
+                ctx.fillText('⭐', starX - 6, starY + 4);
             }
         }
 
         // Oil slip effect
         if (player.onOil) {
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.8)';
             ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
             ctx.beginPath();
-            ctx.arc(0, 0, 22, 0, Math.PI * 2);
+            ctx.arc(0, 0, 25, 0, Math.PI * 2);
             ctx.stroke();
+            ctx.setLineDash([]);
         }
 
         ctx.restore();

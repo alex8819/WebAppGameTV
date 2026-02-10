@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirinto Invisibile</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .landing .logo {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #1e3a5f 0%, #7c3aed 50%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .maze-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .landing .tagline {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+
+        .coop-badge {
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 40px;
+            display: inline-block;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .mode-btn {
+            padding: 25px 40px;
+            font-size: 1.3rem;
+            border-radius: 16px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.host {
+            background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+            color: white;
+        }
+
+        .mode-btn.player {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #7c3aed;
+            color: var(--light);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(124, 58, 237, 0.3);
+        }
+
+        .mode-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 8px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--light);
+        }
+
+        .game-info {
+            margin-top: 50px;
+            max-width: 500px;
+        }
+
+        .game-info h3 {
+            color: var(--light);
+            margin-bottom: 15px;
+        }
+
+        .role-rules {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: left;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .role-card .emoji {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .role-card .role-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--light);
+            margin-bottom: 8px;
+        }
+
+        .role-card .role-desc {
+            font-size: 0.85rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .traps-info {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .trap-item {
+            text-align: center;
+        }
+
+        .trap-item .trap-emoji {
+            font-size: 1.5rem;
+        }
+
+        .trap-item .trap-name {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        @media (max-width: 600px) {
+            .landing .logo {
+                font-size: 2.2rem;
+            }
+            .mode-btn {
+                padding: 20px 30px;
+                font-size: 1.1rem;
+            }
+            .role-rules {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Torna ai giochi</a>
+
+    <div class="landing">
+        <h1 class="logo">Labirinto Invisibile</h1>
+        <div class="maze-display">
+            <span>🧭</span>
+            <span>🌀</span>
+            <span>🏁</span>
+        </div>
+        <span class="coop-badge">SQUADRE 2-12 GIOCATORI</span>
+        <p class="tagline">Guida il tuo compagno attraverso il labirinto!</p>
+
+        <div class="mode-buttons">
+            <a href="/maze-host" class="mode-btn host">
+                OSPITA PARTITA
+                <div class="mode-desc">Apri sulla TV per mostrare il labirinto</div>
+            </a>
+            <a href="/maze-play" class="mode-btn player">
+                ENTRA IN GIOCO
+                <div class="mode-desc">Unisciti come Navigatore o Pilota</div>
+            </a>
+        </div>
+
+        <div class="game-info">
+            <h3>I Ruoli</h3>
+            <div class="role-rules">
+                <div class="role-card">
+                    <span class="emoji">👀</span>
+                    <div class="role-name">Navigatore</div>
+                    <div class="role-desc">Guarda la TV e guida il pilota a voce. "Vai dritto... ora gira a sinistra!"</div>
+                </div>
+                <div class="role-card">
+                    <span class="emoji">🎮</span>
+                    <div class="role-name">Pilota</div>
+                    <div class="role-desc">Girato di spalle, segui le istruzioni. Il telefono vibra se sbagli!</div>
+                </div>
+            </div>
+
+            <div class="traps-info">
+                <div class="trap-item">
+                    <span class="trap-emoji">🌀</span>
+                    <div class="trap-name">Teletrasporto</div>
+                </div>
+                <div class="trap-item">
+                    <span class="trap-emoji">🕸️</span>
+                    <div class="trap-name">Rallentamento</div>
+                </div>
+                <div class="trap-item">
+                    <span class="trap-emoji">🚧</span>
+                    <div class="trap-name">Muro Mobile</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

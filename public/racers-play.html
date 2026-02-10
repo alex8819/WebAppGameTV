@@ -5,10 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Micro Racers - Controller</title>
-    <link rel="stylesheet" href="/css/common.css?v=1">
-    <link rel="stylesheet" href="/css/racers-player.css?v=1">
+    <link rel="stylesheet" href="/css/common.css?v=3">
+    <link rel="stylesheet" href="/css/racers-player.css?v=3">
 </head>
 <body>
+    <!-- Rotate phone overlay -->
+    <div class="rotate-overlay">
+        <div class="rotate-icon">📱</div>
+        <div class="rotate-text">Ruota il telefono!</div>
+        <div class="rotate-subtext">Gira lo smartphone in orizzontale per giocare</div>
+    </div>
+
     <div class="controller-container">
         <!-- Join Screen -->
         <div id="join-screen">
@@ -46,6 +53,10 @@
                 <!-- Other players -->
             </div>
 
+            <div class="lobby-timer hidden" id="lobby-timer">
+                La gara parte tra <span id="lobby-timer-value">50</span>s
+            </div>
+
             <div class="waiting-message">
                 Attendi che l'host avvii la gara...
             </div>
@@ -57,51 +68,49 @@
             <div class="tilt-hint">Inclina il telefono per sterzare!</div>
         </div>
 
-        <!-- Race Controls Screen -->
+        <!-- Race Controls Screen (Landscape layout) -->
         <div id="race-screen" class="hidden">
-            <div class="race-hud">
-                <div class="hud-item">
-                    <div class="hud-label">Giro</div>
-                    <div class="hud-value"><span id="current-lap">1</span>/<span id="total-laps">3</span></div>
-                </div>
-                <div class="hud-item">
-                    <div class="hud-label">Posizione</div>
-                    <div class="hud-value" id="position">-</div>
-                </div>
-                <div class="hud-item">
-                    <div class="hud-label">Velocità</div>
-                    <div class="hud-value" id="speed">0</div>
-                </div>
-            </div>
-
-            <div class="steering-indicator">
-                <div class="steering-bar">
-                    <div class="steering-marker" id="steering-marker"></div>
-                </div>
-                <div class="steering-labels">
-                    <span>⬅️</span>
-                    <span>➡️</span>
-                </div>
-            </div>
-
-            <div class="powerup-slot" id="powerup-slot">
-                <!-- Current powerup -->
-            </div>
-
-            <div class="controls-area">
-                <button class="brake-pedal" id="brake-pedal">
+            <div class="race-layout">
+                <!-- Left: Brake -->
+                <button class="pedal brake-pedal" id="brake-pedal">
                     <span class="pedal-icon">🛑</span>
                     <span class="pedal-label">FRENO</span>
                 </button>
 
-                <button class="gas-pedal" id="gas-pedal">
+                <!-- Center: Info + Powerup -->
+                <div class="center-panel">
+                    <div class="race-hud">
+                        <div class="hud-item">
+                            <div class="hud-label">Giro</div>
+                            <div class="hud-value"><span id="current-lap">1</span>/<span id="total-laps">3</span></div>
+                        </div>
+                        <div class="hud-item">
+                            <div class="hud-label">Pos</div>
+                            <div class="hud-value" id="position">-</div>
+                        </div>
+                        <button class="calibrate-btn" id="calibrate-btn">🎯 CALIBRA</button>
+                    </div>
+
+                    <div class="powerup-slot" id="powerup-slot">
+                        <!-- Current powerup -->
+                    </div>
+
+                    <div class="steering-indicator">
+                        <div class="steering-bar">
+                            <div class="steering-marker" id="steering-marker"></div>
+                        </div>
+                    </div>
+
+                    <div class="status-effects" id="status-effects">
+                        <!-- Effect indicators -->
+                    </div>
+                </div>
+
+                <!-- Right: Gas -->
+                <button class="pedal gas-pedal" id="gas-pedal">
                     <span class="pedal-icon">⚡</span>
                     <span class="pedal-label">GAS</span>
                 </button>
-            </div>
-
-            <div class="status-effects" id="status-effects">
-                <!-- Effect indicators -->
             </div>
         </div>
 
@@ -128,6 +137,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/racers-player.js?v=1"></script>
+    <script src="/js/racers-player.js?v=3"></script>
 </body>
 </html>

@@ -50,91 +50,80 @@ const PHYSICS = {
     trackWidth: 100
 };
 
-// Track generation constants
+// Max race duration in ms (2 minutes)
+const MAX_RACE_TIME = 120000;
+
+// Track constants for oval
 const TRACK = {
-    segmentLength: 150,
-    minSegments: 12,
-    maxSegments: 16,
-    curveIntensity: 0.4
+    centerX: 400,
+    centerY: 300,
+    radiusX: 280,  // Horizontal radius
+    radiusY: 200,  // Vertical radius
+    trackWidth: 80,
+    numCheckpoints: 12
 };
 
 function generatePin() {
     return String(Math.floor(1000 + Math.random() * 9000));
 }
 
-// Generate a random track
+// Generate an oval track
 function generateTrack() {
-    const numSegments = TRACK.minSegments + Math.floor(Math.random() * (TRACK.maxSegments - TRACK.minSegments));
-    const segments = [];
-    let currentAngle = 0;
-    let currentX = 400;
-    let currentY = 500;
+    const { centerX, centerY, radiusX, radiusY, trackWidth, numCheckpoints } = TRACK;
 
-    for (let i = 0; i < numSegments; i++) {
-        // Vary the curve direction
-        const curveAmount = (Math.random() - 0.5) * TRACK.curveIntensity * Math.PI;
-        currentAngle += curveAmount;
+    // Generate checkpoints around the oval (COUNTER-CLOCKWISE, starting from right)
+    // Counter-clockwise is more natural (like real racing)
+    const checkpoints = [];
+    for (let i = 0; i < numCheckpoints; i++) {
+        // Start from right (angle = 0) and go counter-clockwise (negative direction)
+        const angle = 0 - (i * 2 * Math.PI / numCheckpoints);
+        const x = centerX + Math.cos(angle) * radiusX;
+        const y = centerY + Math.sin(angle) * radiusY;
 
-        // Keep track relatively contained
-        if (currentAngle > Math.PI / 2) currentAngle = Math.PI / 2;
-        if (currentAngle < -Math.PI / 2) currentAngle = -Math.PI / 2;
+        // Tangent angle for counter-clockwise travel
+        const tangentAngle = angle - Math.PI / 2;
 
-        const endX = currentX + Math.cos(currentAngle) * TRACK.segmentLength;
-        const endY = currentY - Math.sin(currentAngle) * TRACK.segmentLength;
-
-        segments.push({
-            startX: currentX,
-            startY: currentY,
-            endX: endX,
-            endY: endY,
-            angle: currentAngle,
-            width: PHYSICS.trackWidth + Math.random() * 30 // Variable width
+        checkpoints.push({
+            id: i,
+            x: x,
+            y: y,
+            angle: tangentAngle,
+            width: trackWidth
         });
-
-        currentX = endX;
-        currentY = endY;
     }
 
-    // Create closing segment back to start
-    segments.push({
-        startX: currentX,
-        startY: currentY,
-        endX: segments[0].startX,
-        endY: segments[0].startY,
-        angle: Math.atan2(segments[0].startY - currentY, segments[0].startX - currentX),
-        width: PHYSICS.trackWidth
-    });
-
-    // Generate checkpoints (at each segment junction)
-    const checkpoints = segments.map((seg, i) => ({
-        id: i,
-        x: seg.startX,
-        y: seg.startY,
-        angle: seg.angle,
-        width: seg.width
-    }));
-
-    // Generate power-up spawn points (on some segments)
+    // Generate power-up spawn points (4 spots around the track)
     const powerupSpawns = [];
-    for (let i = 0; i < segments.length; i += 3) {
-        const seg = segments[i];
+    const powerupAngles = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
+    for (const angle of powerupAngles) {
+        const x = centerX + Math.cos(angle) * radiusX;
+        const y = centerY + Math.sin(angle) * radiusY;
         powerupSpawns.push({
-            x: (seg.startX + seg.endX) / 2,
-            y: (seg.startY + seg.endY) / 2,
+            x: x,
+            y: y,
             active: true,
             type: null
         });
     }
 
+    // Start line on the RIGHT side of oval (vertical line)
+    const startLine = {
+        x: centerX + radiusX,
+        y: centerY,
+        angle: -Math.PI / 2  // Pointing up (counter-clockwise start)
+    };
+
     return {
-        segments,
+        type: 'oval',
+        centerX,
+        centerY,
+        radiusX,
+        radiusY,
+        trackWidth,
         checkpoints,
         powerupSpawns,
-        startLine: {
-            x: segments[0].startX,
-            y: segments[0].startY,
-            angle: segments[0].angle
-        }
+        startLine,
+        direction: 'counter-clockwise'
     };
 }
 
@@ -229,13 +218,14 @@ function joinGame(pin, nickname, socketId) {
 }
 
 function getStartPosition(track, playerIndex) {
-    const startLine = track.startLine;
-    const offset = (playerIndex - 2) * 25; // Stagger positions
-    const perpAngle = startLine.angle + Math.PI / 2;
+    // Position cars on the right side of the oval (start line is vertical)
+    // Cars line up vertically, slightly behind the start line
+    const offsetY = (playerIndex - 2) * 35; // Spread vertically
+    const offsetX = Math.floor(playerIndex / 4) * 40; // Two columns if many players
 
     return {
-        x: startLine.x + Math.cos(perpAngle) * offset,
-        y: startLine.y - Math.sin(perpAngle) * offset - (playerIndex * 30) // Stagger back
+        x: track.startLine.x - 30 - offsetX, // Behind start line (to the left)
+        y: track.startLine.y + offsetY
     };
 }
 
@@ -262,8 +252,8 @@ function startCountdown(pin) {
     game.status = 'countdown';
     game.countdown = 3;
 
-    // Spawn initial power-ups
-    spawnPowerups(game);
+    // Spawn all power-ups at race start
+    spawnPowerups(game, true);
 
     return { success: true, countdown: game.countdown };
 }
@@ -324,7 +314,7 @@ function usePowerup(pin, socketId) {
         case 'boost':
             player.activeEffects.push({
                 type: 'boost',
-                endTime: Date.now() + POWERUPS.BOOST.duration
+                endTime: Date.now() + powerup.duration
             });
             result.effect = 'speed_boost';
             break;
@@ -352,7 +342,7 @@ function usePowerup(pin, socketId) {
             if (targetPlayer) {
                 targetPlayer.activeEffects.push({
                     type: 'stun',
-                    endTime: Date.now() + POWERUPS.MISSILE.duration
+                    endTime: Date.now() + powerup.effect.stunDuration
                 });
                 targetPlayer.speed *= 0.3; // Slow down when hit
                 result.effect = 'missile_hit';
@@ -466,7 +456,21 @@ function updateGameState(pin) {
 
     // Check if race is over
     const allFinished = Array.from(game.players.values()).every(p => p.finished);
-    if (allFinished && game.players.size > 0) {
+    const raceTime = now - game.raceStartTime;
+    const timeExpired = raceTime >= MAX_RACE_TIME;
+
+    if ((allFinished || timeExpired) && game.players.size > 0) {
+        // Mark remaining players as DNF
+        if (timeExpired) {
+            for (const player of game.players.values()) {
+                if (!player.finished) {
+                    player.finished = true;
+                    player.finishTime = null; // DNF
+                    player.finishPosition = game.finishOrder.length + 1;
+                    game.finishOrder.push(player.socketId);
+                }
+            }
+        }
         game.status = 'finished';
     }
 
@@ -502,7 +506,10 @@ function checkCheckpoints(game, player) {
 }
 
 function checkPowerupPickup(game, player) {
-    if (player.powerup) return; // Already has powerup
+    if (player.powerup) {
+        // Already has powerup - log to verify
+        return;
+    }
 
     for (const spawn of game.track.powerupSpawns) {
         if (!spawn.active || !spawn.type) continue;
@@ -511,8 +518,62 @@ function checkPowerupPickup(game, player) {
         const dy = player.y - spawn.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
+        // Debug: log when player is close to a powerup
+        if (dist < 60) {
+            console.log(`${player.nickname} near powerup at dist ${dist.toFixed(1)} (need < 30)`);
+        }
+
         if (dist < 30) {
-            player.powerup = POWERUPS[spawn.type];
+            const powerupType = POWERUPS[spawn.type];
+            if (!powerupType) {
+                spawn.active = false;
+                spawn.type = null;
+                return;
+            }
+
+            const now = Date.now();
+            console.log(`${player.nickname} picked up ${powerupType.name} - activating immediately!`);
+
+            // Apply powerup effect immediately
+            switch (powerupType.id) {
+                case 'boost':
+                    // Speed boost for 3 seconds
+                    player.activeEffects.push({
+                        type: 'boost',
+                        endTime: now + 3000
+                    });
+                    break;
+
+                case 'oil':
+                    // Drop oil slick behind player
+                    const oilX = player.x - Math.cos(player.angle) * 50;
+                    const oilY = player.y + Math.sin(player.angle) * 50;
+                    game.hazards.push({
+                        type: 'oil',
+                        x: oilX,
+                        y: oilY,
+                        radius: 35,
+                        createdAt: now,
+                        duration: 10000,
+                        createdBy: player.socketId
+                    });
+                    break;
+
+                case 'missile':
+                    // Find and hit player ahead
+                    const targetPlayer = findPlayerAhead(game, player);
+                    if (targetPlayer) {
+                        targetPlayer.activeEffects.push({
+                            type: 'stun',
+                            endTime: now + 2000
+                        });
+                        targetPlayer.speed *= 0.2;
+                        console.log(`${player.nickname} hit ${targetPlayer.nickname} with missile!`);
+                    }
+                    break;
+            }
+
+            player.powerupsUsed++;
             spawn.active = false;
             spawn.type = null;
 
@@ -549,40 +610,42 @@ function checkHazards(game, player, now) {
 }
 
 function keepOnTrack(game, player) {
-    // Simplified bounds - keep within canvas area
-    const minX = 50, maxX = 750;
-    const minY = 50, maxY = 550;
+    const track = game.track;
+    const { centerX, centerY, radiusX, radiusY, trackWidth } = track;
 
-    if (player.x < minX) {
-        player.x = minX;
-        player.speed *= PHYSICS.wallBounce;
-        player.collisions++;
-    }
-    if (player.x > maxX) {
-        player.x = maxX;
-        player.speed *= PHYSICS.wallBounce;
-        player.collisions++;
-    }
-    if (player.y < minY) {
-        player.y = minY;
-        player.speed *= PHYSICS.wallBounce;
-        player.collisions++;
-    }
-    if (player.y > maxY) {
-        player.y = maxY;
+    // Calculate normalized distance from center (ellipse equation)
+    const dx = player.x - centerX;
+    const dy = player.y - centerY;
+
+    // Distance ratio for ellipse (1.0 = on the ellipse center line)
+    const distRatio = Math.sqrt((dx * dx) / (radiusX * radiusX) + (dy * dy) / (radiusY * radiusY));
+
+    // Track boundaries (inner and outer edges)
+    const halfWidth = trackWidth / 2;
+    const innerRatio = (radiusX - halfWidth) / radiusX;
+    const outerRatio = (radiusX + halfWidth) / radiusX;
+
+    // Check if outside track bounds
+    if (distRatio < innerRatio || distRatio > outerRatio) {
+        // Push back onto track
+        const targetRatio = distRatio < innerRatio ? innerRatio : outerRatio;
+        const correction = targetRatio / distRatio;
+
+        player.x = centerX + dx * correction;
+        player.y = centerY + dy * correction;
         player.speed *= PHYSICS.wallBounce;
         player.collisions++;
     }
 }
 
-function spawnPowerups(game) {
-    const types = Object.keys(POWERUPS);
-
+function spawnPowerups(game, forceAll = false) {
     for (const spawn of game.track.powerupSpawns) {
         if (!spawn.active || spawn.type) continue;
 
-        if (Math.random() < 0.5) { // 50% chance to spawn
+        // Force spawn all at race start, or 50% chance during race
+        if (forceAll || Math.random() < 0.5) {
             spawn.type = getRandomPowerupType();
+            console.log(`Spawned powerup: ${spawn.type} at (${spawn.x.toFixed(0)}, ${spawn.y.toFixed(0)})`);
         }
     }
 }
@@ -655,6 +718,17 @@ function getPlayerState(pin, socketId) {
     const player = game.players.get(socketId);
     if (!player) return null;
 
+    // Calculate current race position
+    const allPlayers = Array.from(game.players.values());
+    allPlayers.sort((a, b) => {
+        if (a.finished && !b.finished) return -1;
+        if (!a.finished && b.finished) return 1;
+        if (a.finished && b.finished) return a.finishPosition - b.finishPosition;
+        if (a.lap !== b.lap) return b.lap - a.lap;
+        return b.nextCheckpoint - a.nextCheckpoint;
+    });
+    const position = allPlayers.findIndex(p => p.socketId === socketId) + 1;
+
     return {
         x: player.x,
         y: player.y,
@@ -663,13 +737,10 @@ function getPlayerState(pin, socketId) {
         lap: player.lap,
         totalLaps: game.totalLaps,
         nextCheckpoint: player.nextCheckpoint,
+        position: position,
         finished: player.finished,
         finishPosition: player.finishPosition,
-        powerup: player.powerup ? {
-            id: player.powerup.id,
-            name: player.powerup.name,
-            icon: player.powerup.icon
-        } : null,
+        finishTime: player.finishTime,
         hasBoost: player.activeEffects.some(e => e.type === 'boost'),
         isStunned: player.activeEffects.some(e => e.type === 'stun'),
         onOil: player.activeEffects.some(e => e.type === 'oil_slip')

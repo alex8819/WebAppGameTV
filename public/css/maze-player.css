@@ -1,0 +1,498 @@
+/* Maze Player Styles */
+
+:root {
+    --maze-primary: #7c3aed;
+    --maze-secondary: #06b6d4;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #fff;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.player-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.screen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+/* ==================== JOIN SCREEN ==================== */
+
+#join-screen {
+    text-align: center;
+}
+
+.title {
+    font-size: 2rem;
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+}
+
+.maze-icons {
+    font-size: 1.5rem;
+    letter-spacing: 8px;
+    margin-bottom: 30px;
+}
+
+.join-form {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.join-form input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    color: white;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.join-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.join-form input:focus {
+    outline: none;
+    border-color: var(--maze-primary);
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
+}
+
+#pin-input {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 10px;
+}
+
+.role-section {
+    margin: 10px 0;
+}
+
+.role-label {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.role-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.role-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.role-btn.selected {
+    border-color: var(--maze-primary);
+    background: rgba(124, 58, 237, 0.2);
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
+}
+
+.role-btn .role-icon {
+    font-size: 1.8rem;
+}
+
+.role-btn .role-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.role-btn .role-desc {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    border: none;
+    padding: 18px 40px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.btn-primary:active {
+    transform: scale(0.95);
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 0.9rem;
+    min-height: 24px;
+}
+
+/* ==================== LOBBY SCREEN ==================== */
+
+#lobby-screen {
+    text-align: center;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.15), transparent);
+}
+
+.lobby-info {
+    margin-bottom: 30px;
+}
+
+.my-team {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+}
+
+.my-role {
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+}
+
+.my-name {
+    font-size: 1rem;
+    color: #888;
+}
+
+.team-status-lobby {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px 30px;
+    margin-bottom: 30px;
+}
+
+.teammate-status {
+    font-size: 1.1rem;
+    color: #888;
+}
+
+.teammate-status.ready {
+    color: #22c55e;
+}
+
+.waiting-message {
+    font-size: 1rem;
+    color: #666;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* ==================== NAVIGATOR SCREEN ==================== */
+
+#navigator-screen {
+    background: linear-gradient(180deg, #0f172a, #1e1b4b);
+    text-align: center;
+}
+
+.navigator-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.big-eye {
+    font-size: 6rem;
+    animation: look 3s ease-in-out infinite;
+}
+
+@keyframes look {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.navigator-content h2 {
+    font-size: 2rem;
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.navigator-content p {
+    font-size: 1.1rem;
+    color: #ccc;
+}
+
+.navigator-hint {
+    font-style: italic;
+    color: #888 !important;
+    font-size: 1rem !important;
+}
+
+.timer-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    margin-top: 30px;
+}
+
+.timer-icon {
+    font-size: 1.5rem;
+}
+
+.timer-value {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+}
+
+/* ==================== PILOT SCREEN ==================== */
+
+#pilot-screen {
+    background: #000;
+    padding: 0;
+}
+
+.pilot-controls {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.control-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.dir-btn {
+    width: 90px;
+    height: 90px;
+    background: rgba(124, 58, 237, 0.3);
+    border: 3px solid var(--maze-primary);
+    border-radius: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dir-btn:active {
+    background: var(--maze-primary);
+    transform: scale(0.95);
+}
+
+.dir-btn .arrow {
+    font-size: 2.5rem;
+    color: #fff;
+}
+
+.center-indicator {
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+}
+
+.pilot-icon {
+    font-size: 2.5rem;
+}
+
+.pilot-hint {
+    font-size: 0.9rem;
+    color: #666;
+    text-align: center;
+}
+
+/* Pilot feedback states */
+.pilot-controls.wall-hit {
+    animation: wallHit 0.3s ease-out;
+}
+
+@keyframes wallHit {
+    0%, 100% { background: #000; }
+    50% { background: #450a0a; }
+}
+
+.pilot-controls.trap-triggered {
+    animation: trapHit 0.5s ease-out;
+}
+
+@keyframes trapHit {
+    0%, 100% { background: #000; }
+    25%, 75% { background: #4c1d95; }
+}
+
+.pilot-controls.slowed .dir-btn {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ==================== COUNTDOWN SCREEN ==================== */
+
+#countdown-screen {
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.3), #0f172a);
+    text-align: center;
+}
+
+.countdown-number {
+    font-size: 10rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--maze-primary), var(--maze-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: countPulse 1s ease-in-out infinite;
+}
+
+@keyframes countPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.countdown-role {
+    font-size: 1.5rem;
+    color: #888;
+    margin-top: 20px;
+}
+
+/* ==================== FINISHED SCREEN ==================== */
+
+#finished-screen {
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.2), #0f172a);
+    text-align: center;
+}
+
+.finished-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.finished-icon {
+    font-size: 5rem;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.finished-title {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.finished-message {
+    font-size: 1.1rem;
+    color: #ccc;
+}
+
+.finished-time {
+    font-size: 2rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: var(--maze-secondary);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-height: 600px) {
+    .dir-btn {
+        width: 70px;
+        height: 70px;
+    }
+
+    .center-indicator {
+        width: 70px;
+        height: 70px;
+    }
+
+    .dir-btn .arrow {
+        font-size: 2rem;
+    }
+
+    .pilot-icon {
+        font-size: 2rem;
+    }
+}
+
+@media (min-width: 500px) {
+    .dir-btn {
+        width: 100px;
+        height: 100px;
+    }
+
+    .center-indicator {
+        width: 100px;
+        height: 100px;
+    }
+}

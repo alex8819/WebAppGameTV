@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citadel Guardians - Host</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/tower-host.css">
+</head>
+<body>
+    <div class="tower-container">
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen">
+            <div class="lobby-header">
+                <h1 class="game-title">Citadel Guardians</h1>
+                <div class="towers-icons">🏹 🔮 ⚔️ 💥</div>
+            </div>
+
+            <div class="pin-section">
+                <div class="pin-label">CODICE PARTITA</div>
+                <div class="pin-display" id="game-pin">----</div>
+                <div class="pin-hint">Inserisci questo codice sul tuo telefono</div>
+            </div>
+
+            <div class="players-section">
+                <h3>Guardiani <span id="player-count">(0/4)</span></h3>
+                <div class="players-grid" id="players-grid">
+                    <!-- Players will be added here -->
+                </div>
+            </div>
+
+            <button id="btn-start" class="btn-start" disabled>
+                INIZIA BATTAGLIA
+            </button>
+            <div class="start-hint" id="start-hint">In attesa di giocatori...</div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div class="header-left">
+                    <div class="wave-display">
+                        <span class="wave-label">WAVE</span>
+                        <span class="wave-number" id="wave-number">0</span>
+                        <span class="wave-max">/ 10</span>
+                    </div>
+                </div>
+                <div class="header-center">
+                    <div class="base-hp-container">
+                        <div class="base-hp-label">CITTADELLA</div>
+                        <div class="base-hp-bar">
+                            <div class="base-hp-fill" id="base-hp-fill"></div>
+                        </div>
+                        <div class="base-hp-text"><span id="base-hp">100</span> / 100</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="phase-display" id="phase-display">COSTRUZIONE</div>
+                    <div class="ready-display" id="ready-display">
+                        <span id="ready-count">0</span>/<span id="total-players">0</span> Pronti
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-area">
+                <canvas id="game-canvas" width="800" height="600"></canvas>
+
+                <!-- Kill Feed -->
+                <div class="kill-feed" id="kill-feed"></div>
+            </div>
+
+            <div class="game-footer">
+                <div class="players-stats" id="players-stats">
+                    <!-- Player stats will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen hidden">
+            <div class="gameover-content">
+                <div class="gameover-icon" id="gameover-icon">🏰</div>
+                <h1 class="gameover-title" id="gameover-title">VITTORIA!</h1>
+                <p class="gameover-subtitle" id="gameover-subtitle">La cittadella è salva!</p>
+
+                <div class="final-stats">
+                    <div class="stat-row">
+                        <span>Wave completate:</span>
+                        <span id="final-waves">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>HP cittadella:</span>
+                        <span id="final-hp">0</span>
+                    </div>
+                </div>
+
+                <div class="rankings" id="rankings">
+                    <!-- Player rankings -->
+                </div>
+
+                <button class="btn-restart" onclick="location.reload()">
+                    NUOVA PARTITA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/tower-host.js"></script>
+</body>
+</html>

@@ -1,0 +1,436 @@
+.asso-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+/* Lobby Screen */
+.lobby-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.game-title {
+    font-size: 3rem;
+    background: linear-gradient(135deg, #10b981 0%, #14532d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+}
+
+.card-icons {
+    font-size: 2rem;
+    letter-spacing: 10px;
+}
+
+.pin-section {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.pin-label {
+    font-size: 1rem;
+    color: var(--gray);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.pin-display {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #10b981;
+    letter-spacing: 15px;
+    font-family: monospace;
+}
+
+.pin-hint {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+.players-section {
+    flex: 1;
+    margin-bottom: 30px;
+}
+
+.players-section h3 {
+    color: var(--light);
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+}
+
+.players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.player-card {
+    background: rgba(16, 185, 129, 0.1);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.player-card .avatar {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.player-card .name {
+    color: var(--light);
+    font-weight: bold;
+}
+
+.btn-start {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px 40px;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #10b981 0%, #14532d 100%);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-start:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-start:not(:disabled):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
+}
+
+.start-hint {
+    text-align: center;
+    color: var(--gray);
+    margin-top: 15px;
+}
+
+/* Countdown Screen */
+#countdown-screen {
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(20, 83, 45, 0.2) 100%);
+}
+
+.countdown-number {
+    font-size: 12rem;
+    font-weight: bold;
+    color: #10b981;
+    animation: pulse 1s ease infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.countdown-text {
+    font-size: 1.5rem;
+    color: var(--gray);
+    margin-top: 20px;
+}
+
+/* Game Screen */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.round-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.round-label {
+    font-size: 0.8rem;
+    color: var(--gray);
+    text-transform: uppercase;
+}
+
+.round-value {
+    font-size: 1.5rem;
+    color: #10b981;
+    font-weight: bold;
+}
+
+.header-center h2 {
+    color: var(--light);
+    font-size: 1.5rem;
+}
+
+.timer-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(16, 185, 129, 0.2);
+    padding: 10px 20px;
+    border-radius: 25px;
+}
+
+.timer-icon {
+    font-size: 1.5rem;
+}
+
+.timer-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #10b981;
+    min-width: 50px;
+    text-align: center;
+}
+
+.game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.cards-display {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.card {
+    width: 120px;
+    height: 180px;
+    background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+    border: 3px solid #10b981;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.card.revealed {
+    transform: rotateY(180deg);
+    background: linear-gradient(135deg, #10b981 0%, #14532d 100%);
+}
+
+.card.ace {
+    animation: glowAce 1s ease infinite;
+}
+
+@keyframes glowAce {
+    0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
+}
+
+.ace-hint {
+    color: var(--gray);
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.scoreboard {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px;
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.scoreboard h3 {
+    color: var(--light);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.scores-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 8px;
+}
+
+.score-row.first {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(20, 83, 45, 0.3) 100%);
+    border: 1px solid #10b981;
+}
+
+.score-row .rank {
+    font-weight: bold;
+    color: #10b981;
+    min-width: 30px;
+}
+
+.score-row .name {
+    flex: 1;
+    color: var(--light);
+}
+
+.score-row .points {
+    font-weight: bold;
+    color: #10b981;
+}
+
+/* Reveal Screen */
+#reveal-screen {
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(20, 83, 45, 0.2) 100%);
+}
+
+.reveal-content {
+    text-align: center;
+}
+
+.reveal-card {
+    font-size: 10rem;
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.reveal-text {
+    font-size: 2rem;
+    color: var(--light);
+    margin-top: 20px;
+}
+
+.round-winner {
+    font-size: 1.5rem;
+    color: #10b981;
+    margin-top: 15px;
+}
+
+/* Winner Screen */
+#winner-screen {
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+}
+
+.winner-content {
+    text-align: center;
+}
+
+.winner-trophy {
+    font-size: 8rem;
+    animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.winner-title {
+    font-size: 3rem;
+    color: #f59e0b;
+    margin: 20px 0;
+}
+
+.winner-name {
+    font-size: 2.5rem;
+    color: var(--light);
+    font-weight: bold;
+}
+
+.winner-score {
+    font-size: 1.5rem;
+    color: #10b981;
+    margin-top: 10px;
+}
+
+.final-ranking {
+    margin: 40px 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    min-width: 300px;
+}
+
+.final-ranking .score-row {
+    margin-bottom: 10px;
+}
+
+.btn-restart {
+    padding: 20px 60px;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, #10b981 0%, #14532d 100%);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-restart:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
+}
+
+@media (max-width: 700px) {
+    .game-title {
+        font-size: 2rem;
+    }
+
+    .pin-display {
+        font-size: 3rem;
+    }
+
+    .card {
+        width: 80px;
+        height: 120px;
+        font-size: 2.5rem;
+    }
+
+    .countdown-number {
+        font-size: 8rem;
+    }
+}

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citadel Guardians</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .landing .logo {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .towers-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .landing .tagline {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 50px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .mode-btn {
+            padding: 25px 40px;
+            font-size: 1.3rem;
+            border-radius: 16px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.host {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white;
+        }
+
+        .mode-btn.player {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #f59e0b;
+            color: var(--light);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(245, 158, 11, 0.3);
+        }
+
+        .mode-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 8px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--light);
+        }
+
+        .game-info {
+            margin-top: 50px;
+            max-width: 500px;
+        }
+
+        .game-info h3 {
+            color: var(--light);
+            margin-bottom: 15px;
+        }
+
+        .tower-rules {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .tower-rule {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .tower-rule .emoji {
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        .tower-rule .name {
+            color: var(--light);
+            font-weight: 600;
+        }
+
+        .coop-badge {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        @media (max-width: 600px) {
+            .landing .logo {
+                font-size: 2.2rem;
+            }
+            .mode-btn {
+                padding: 20px 30px;
+                font-size: 1.1rem;
+            }
+            .tower-rules {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Torna ai giochi</a>
+
+    <div class="landing">
+        <h1 class="logo">Citadel Guardians</h1>
+        <div class="towers-display">
+            <span>🏹</span>
+            <span>🔮</span>
+            <span>⚔️</span>
+            <span>💥</span>
+        </div>
+        <span class="coop-badge">COOPERATIVO 2-4 GIOCATORI</span>
+        <p class="tagline">Difendi la cittadella insieme!</p>
+
+        <div class="mode-buttons">
+            <a href="/tower-host" class="mode-btn host">
+                OSPITA PARTITA
+                <div class="mode-desc">Apri sulla TV per creare la partita</div>
+            </a>
+            <a href="/tower-play" class="mode-btn player">
+                ENTRA IN GIOCO
+                <div class="mode-desc">Unisciti con il PIN dal tuo smartphone</div>
+            </a>
+        </div>
+
+        <div class="game-info">
+            <h3>Le Torrette</h3>
+            <div class="tower-rules">
+                <div class="tower-rule">
+                    <span class="emoji">🏹</span>
+                    <span class="name">Sentinel</span>
+                    <div>Attacco rapido, danno singolo</div>
+                </div>
+                <div class="tower-rule">
+                    <span class="emoji">🔮</span>
+                    <span class="name">Arcane Spire</span>
+                    <div>Danno ad area magico</div>
+                </div>
+                <div class="tower-rule">
+                    <span class="emoji">⚔️</span>
+                    <span class="name">Vanguard Post</span>
+                    <div>Spawna soldati che bloccano</div>
+                </div>
+                <div class="tower-rule">
+                    <span class="emoji">💥</span>
+                    <span class="name">Thunder Cannon</span>
+                    <div>Danno devastante, lento</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

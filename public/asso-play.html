@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cucù - Gioca</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+            min-height: 100vh;
+            color: white;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .screen {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        /* JOIN SCREEN */
+        .join-screen {
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .game-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-title {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.25rem;
+            border: none;
+            border-radius: 0.5rem;
+            text-align: center;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+
+        .btn-join {
+            width: 100%;
+            max-width: 300px;
+            padding: 1rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #1a472a;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        /* LOBBY */
+        .lobby-screen {
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .lobby-card {
+            background: rgba(255,255,255,0.1);
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+        }
+
+        .your-name {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .lives-display {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .waiting-text {
+            opacity: 0.7;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* GAME SCREEN */
+        .game-screen {
+            padding: 1rem;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 0.5rem;
+        }
+
+        .header-lives {
+            font-size: 1.5rem;
+        }
+
+        .header-status {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .card-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .my-card {
+            width: 180px;
+            height: 270px;
+            background: linear-gradient(135deg, #1a3a5c, #0d1f2d);
+            border: 4px solid #4a6fa5;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .my-card.peeking {
+            background: #fff;
+            border-color: #333;
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+
+        .my-card.peeking .card-back {
+            display: none;
+        }
+
+        .my-card.peeking .card-front {
+            display: flex;
+        }
+
+        .card-back {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-back-pattern {
+            font-size: 4rem;
+        }
+
+        .peek-hint {
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            opacity: 0.7;
+            color: #fff;
+        }
+
+        .card-front {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+        }
+
+        .card-value {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .card-suit {
+            font-size: 4rem;
+        }
+
+        .card-name {
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        .my-card.denari { border-color: #ffd700; }
+        .my-card.coppe { border-color: #4169e1; }
+        .my-card.bastoni { border-color: #228b22; }
+        .my-card.spade { border-color: #333; }
+
+        .my-card.revealed-special {
+            animation: specialGlow 1s infinite alternate;
+        }
+
+        @keyframes specialGlow {
+            from { box-shadow: 0 0 20px #ffd700; }
+            to { box-shadow: 0 0 40px #ffd700; }
+        }
+
+        /* ACTIONS */
+        .actions-area {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .actions-area.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 1.25rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+
+        .btn-knock {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-pass {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-draw {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+        }
+
+        .turn-indicator {
+            text-align: center;
+            padding: 1rem;
+            font-size: 1.25rem;
+            background: rgba(255,215,0,0.2);
+            border-radius: 0.5rem;
+        }
+
+        .turn-indicator.my-turn {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #1a472a;
+            font-weight: bold;
+            animation: myTurnPulse 1s infinite;
+        }
+
+        @keyframes myTurnPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .waiting-turn {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* NOTIFICATIONS */
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            z-index: 100;
+            animation: notifyIn 0.3s ease;
+        }
+
+        @keyframes notifyIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .notification.cucu {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #1a472a;
+        }
+
+        .notification.loser {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .notification.winner {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+
+        .notification-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .notification-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* RESULT SCREEN */
+        .result-screen {
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .result-icon {
+            font-size: 6rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-text {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .result-lives {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-continue {
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        /* GAME OVER */
+        .gameover-screen {
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .go-icon {
+            font-size: 8rem;
+        }
+
+        .go-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .go-subtext {
+            font-size: 1.25rem;
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+
+        .btn-replay {
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #1a472a;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* RESPONSIVE - Small phones */
+        @media (max-height: 600px) {
+            .my-card {
+                width: 140px;
+                height: 210px;
+            }
+            .card-value { font-size: 2.5rem; }
+            .card-suit { font-size: 3rem; }
+            .btn-action { padding: 1rem; font-size: 1rem; }
+            .turn-indicator { padding: 0.75rem; font-size: 1rem; }
+        }
+
+        /* RESPONSIVE - Large phones / tablets */
+        @media (min-width: 500px) {
+            .my-card {
+                width: 220px;
+                height: 330px;
+            }
+            .card-value { font-size: 4rem; }
+            .card-suit { font-size: 5rem; }
+            .peek-hint { font-size: 1rem; }
+        }
+
+        /* Safe area for notched phones */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            .actions-area {
+                padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- JOIN SCREEN -->
+    <div id="join-screen" class="screen join-screen active">
+        <div class="game-icon">🃏</div>
+        <h1 class="game-title">Cucù</h1>
+
+        <div class="input-group">
+            <label>Codice Partita</label>
+            <input type="text" id="pin-input" maxlength="4" placeholder="----" inputmode="numeric">
+        </div>
+
+        <div class="input-group">
+            <label>Il tuo nome</label>
+            <input type="text" id="nickname-input" maxlength="12" placeholder="Nickname">
+        </div>
+
+        <button class="btn-join" id="btn-join">ENTRA</button>
+        <div class="error-msg" id="error-msg"></div>
+    </div>
+
+    <!-- LOBBY SCREEN -->
+    <div id="lobby-screen" class="screen lobby-screen">
+        <div class="lobby-card">
+            <div class="your-name" id="your-name">Giocatore</div>
+            <div class="lives-display">❤️❤️❤️</div>
+            <div class="waiting-text" id="lobby-waiting-text">In attesa dell'inizio...</div>
+            <div class="lobby-timer" id="lobby-timer" style="margin-top: 1rem; font-size: 1.5rem; opacity: 0.8;"></div>
+        </div>
+    </div>
+
+    <!-- COUNTDOWN SCREEN -->
+    <div id="countdown-screen" class="screen" style="align-items: center; justify-content: center;">
+        <div style="font-size: 10rem; font-weight: bold;" id="countdown-number">3</div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-screen" class="screen game-screen">
+        <div class="game-header">
+            <div class="header-lives" id="my-lives">❤️❤️❤️</div>
+            <div class="header-status" id="game-status">Round 1</div>
+        </div>
+
+        <div class="card-area">
+            <div class="my-card" id="my-card">
+                <div class="card-back">
+                    <div class="card-back-pattern">🂠</div>
+                    <div class="peek-hint">Tieni premuto per vedere</div>
+                </div>
+                <div class="card-front">
+                    <div class="card-value" id="card-value">?</div>
+                    <div class="card-suit" id="card-suit">?</div>
+                    <div class="card-name" id="card-name">???</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="turn-indicator waiting-turn" id="turn-indicator">
+            In attesa del tuo turno...
+        </div>
+
+        <div class="actions-area disabled" id="actions-area">
+            <div class="action-buttons">
+                <button class="btn-action btn-knock" id="btn-knock">✊ BUSSA</button>
+                <button class="btn-action btn-pass" id="btn-pass">👉 PASSA</button>
+            </div>
+            <button class="btn-action btn-draw hidden" id="btn-draw">🎴 PESCA DAL MAZZO</button>
+        </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="result-screen" class="screen result-screen">
+        <div class="result-icon" id="result-icon">😅</div>
+        <div class="result-text" id="result-text">Fine Round</div>
+        <div class="result-lives" id="result-lives">❤️❤️</div>
+        <button class="btn-continue" id="btn-continue">Continua</button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="gameover-screen" class="screen gameover-screen">
+        <div class="go-icon" id="go-icon">👑</div>
+        <div class="go-text" id="go-text">HAI VINTO!</div>
+        <div class="go-subtext" id="go-subtext">Sei l'ultimo rimasto!</div>
+        <button class="btn-replay" onclick="location.reload()">GIOCA ANCORA</button>
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div id="notification" class="notification hidden">
+        <div class="notification-icon" id="notify-icon">🎉</div>
+        <div class="notification-text" id="notify-text">Messaggio</div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        let gamePin = null;
+        let myCard = null;
+        let isMyTurn = false;
+        let isDealer = false;
+        let myLives = 3;
+        let isPeeking = false;
+
+        const SUIT_SYMBOLS = {
+            denari: '🪙',
+            coppe: '🏆',
+            bastoni: '🌿',
+            spade: '⚔️'
+        };
+
+        // JOIN
+        document.getElementById('btn-join').addEventListener('click', () => {
+            const pin = document.getElementById('pin-input').value.trim();
+            const nickname = document.getElementById('nickname-input').value.trim();
+
+            if (!pin || pin.length !== 4) {
+                showError('Inserisci un codice valido');
+                return;
+            }
+            if (!nickname || nickname.length < 2) {
+                showError('Inserisci un nickname');
+                return;
+            }
+
+            socket.emit('asso:join-game', { pin, nickname });
+        });
+
+        socket.on('asso:join-error', ({ message }) => {
+            showError(message);
+        });
+
+        socket.on('asso:joined', ({ player }) => {
+            gamePin = document.getElementById('pin-input').value.trim();
+            document.getElementById('your-name').textContent = player.nickname;
+            myLives = player.lives;
+            showScreen('lobby-screen');
+        });
+
+        // Server-side lobby countdown
+        socket.on('asso:lobby-countdown', ({ countdown }) => {
+            const timerEl = document.getElementById('lobby-timer');
+            if (countdown <= 0) {
+                timerEl.textContent = 'Inizia!';
+            } else {
+                timerEl.textContent = `Inizio tra ${countdown}s`;
+                if (countdown <= 10) {
+                    timerEl.style.color = '#ff6b6b';
+                    timerEl.style.fontWeight = 'bold';
+                } else {
+                    timerEl.style.color = '';
+                    timerEl.style.fontWeight = '';
+                }
+            }
+        });
+
+        socket.on('asso:game-starting', () => {
+            showScreen('countdown-screen');
+        });
+
+        socket.on('asso:countdown', ({ count }) => {
+            document.getElementById('countdown-number').textContent = count;
+        });
+
+        socket.on('asso:round-start', () => {
+            showScreen('game-screen');
+            updateLivesDisplay();
+            resetCardDisplay();
+        });
+
+        socket.on('asso:your-card', ({ card }) => {
+            myCard = card;
+        });
+
+        socket.on('asso:your-turn', ({ isDealer: dealer }) => {
+            isMyTurn = true;
+            isDealer = dealer;
+            updateTurnIndicator();
+
+            // Vibrate if supported
+            if (navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+        });
+
+        socket.on('asso:turn-changed', ({ currentPlayerSocketId }) => {
+            if (currentPlayerSocketId !== socket.id) {
+                isMyTurn = false;
+                updateTurnIndicator();
+            }
+        });
+
+        socket.on('asso:card-changed', ({ card }) => {
+            myCard = card;
+            showNotification('🔄', 'Carta cambiata!');
+
+            // If currently peeking, update display
+            if (isPeeking) {
+                updateCardDisplay(true);
+            }
+        });
+
+        socket.on('asso:player-knocked', ({ nickname }) => {
+            // Just a notification that someone knocked
+        });
+
+        socket.on('asso:pass-blocked', ({ blockedBy }) => {
+            if (blockedBy.socketId !== socket.id) {
+                showNotification('👑', `CUCÙ! ${blockedBy.nickname} blocca!`, 'cucu');
+            }
+        });
+
+        socket.on('asso:card-revealed', ({ nickname, card }) => {
+            if (card.isRe) {
+                showNotification('👑', `${nickname} ha il RE!`, 'cucu');
+            } else if (card.isCavallo) {
+                showNotification('🐴', `${nickname} - CAVALLO!`);
+            }
+        });
+
+        socket.on('asso:reveal-cards', () => {
+            // Force show card
+            updateCardDisplay(true);
+            document.getElementById('my-card').classList.add('peeking');
+        });
+
+        socket.on('asso:your-round-result', ({ isLoser, wasEliminated, lives }) => {
+            myLives = lives;
+
+            if (wasEliminated) {
+                document.getElementById('result-icon').textContent = '💀';
+                document.getElementById('result-text').textContent = 'ELIMINATO!';
+                document.getElementById('result-lives').textContent = 'Nessuna vita rimasta';
+                document.getElementById('btn-continue').classList.add('hidden');
+            } else if (isLoser) {
+                document.getElementById('result-icon').textContent = '😢';
+                document.getElementById('result-text').textContent = 'Hai perso una vita!';
+                document.getElementById('result-lives').textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+                document.getElementById('btn-continue').classList.remove('hidden');
+            } else {
+                document.getElementById('result-icon').textContent = '😌';
+                document.getElementById('result-text').textContent = 'Salvo!';
+                document.getElementById('result-lives').textContent = '❤️'.repeat(lives);
+                document.getElementById('btn-continue').classList.remove('hidden');
+            }
+
+            showScreen('result-screen');
+        });
+
+        document.getElementById('btn-continue').addEventListener('click', () => {
+            showScreen('game-screen');
+            resetCardDisplay();
+        });
+
+        socket.on('asso:game-over', ({ winner, standings }) => {
+            const isWinner = winner?.socketId === socket.id;
+
+            if (isWinner) {
+                document.getElementById('go-icon').textContent = '👑';
+                document.getElementById('go-text').textContent = 'HAI VINTO!';
+                document.getElementById('go-subtext').textContent = 'Sei l\'ultimo rimasto!';
+            } else {
+                const myStanding = standings.find(s => s.nickname === document.getElementById('your-name').textContent);
+                document.getElementById('go-icon').textContent = '💀';
+                document.getElementById('go-text').textContent = 'GAME OVER';
+                document.getElementById('go-subtext').textContent = myStanding ? `Posizione: ${myStanding.rank}°` : 'Eliminato';
+            }
+
+            showScreen('gameover-screen');
+        });
+
+        socket.on('asso:action-error', ({ message }) => {
+            showNotification('⚠️', message);
+        });
+
+        // CARD INTERACTION
+        const cardEl = document.getElementById('my-card');
+
+        cardEl.addEventListener('touchstart', startPeek);
+        cardEl.addEventListener('mousedown', startPeek);
+        cardEl.addEventListener('touchend', endPeek);
+        cardEl.addEventListener('mouseup', endPeek);
+        cardEl.addEventListener('mouseleave', endPeek);
+
+        function startPeek(e) {
+            e.preventDefault();
+            if (!myCard) return;
+
+            isPeeking = true;
+            cardEl.classList.add('peeking');
+            if (myCard.suit) cardEl.classList.add(myCard.suit);
+            updateCardDisplay(true);
+
+            // Notify server (for Re/Cavallo reveal)
+            socket.emit('asso:peek-card', { pin: gamePin });
+        }
+
+        function endPeek(e) {
+            e.preventDefault();
+            if (!isPeeking) return;
+
+            isPeeking = false;
+
+            // Don't hide if it's a special card that was revealed
+            if (myCard && (myCard.isRe || myCard.isCavallo)) {
+                // Keep showing
+                cardEl.classList.add('revealed-special');
+            } else {
+                cardEl.classList.remove('peeking');
+                if (myCard?.suit) cardEl.classList.remove(myCard.suit);
+                updateCardDisplay(false);
+            }
+        }
+
+        function updateCardDisplay(show) {
+            if (!myCard) return;
+
+            document.getElementById('card-value').textContent = myCard.value;
+            document.getElementById('card-suit').textContent = SUIT_SYMBOLS[myCard.suit] || '?';
+            document.getElementById('card-name').textContent = myCard.fullName || myCard.name;
+
+            const front = document.querySelector('.card-front');
+            const back = document.querySelector('.card-back');
+
+            if (show) {
+                front.style.display = 'flex';
+                back.style.display = 'none';
+            } else {
+                front.style.display = 'none';
+                back.style.display = 'flex';
+            }
+        }
+
+        function resetCardDisplay() {
+            const cardEl = document.getElementById('my-card');
+            cardEl.classList.remove('peeking', 'revealed-special', 'denari', 'coppe', 'bastoni', 'spade');
+            isPeeking = false;
+            updateCardDisplay(false);
+        }
+
+        // ACTIONS
+        document.getElementById('btn-knock').addEventListener('click', () => {
+            if (!isMyTurn) return;
+            socket.emit('asso:knock', { pin: gamePin });
+            isMyTurn = false;
+            updateTurnIndicator();
+        });
+
+        document.getElementById('btn-pass').addEventListener('click', () => {
+            if (!isMyTurn) return;
+            socket.emit('asso:pass', { pin: gamePin });
+            isMyTurn = false;
+            updateTurnIndicator();
+        });
+
+        document.getElementById('btn-draw').addEventListener('click', () => {
+            if (!isMyTurn || !isDealer) return;
+            socket.emit('asso:draw', { pin: gamePin });
+            isMyTurn = false;
+            updateTurnIndicator();
+        });
+
+        function updateTurnIndicator() {
+            const indicator = document.getElementById('turn-indicator');
+            const actions = document.getElementById('actions-area');
+            const drawBtn = document.getElementById('btn-draw');
+            const passBtn = document.getElementById('btn-pass');
+
+            if (isMyTurn) {
+                indicator.textContent = 'È IL TUO TURNO!';
+                indicator.className = 'turn-indicator my-turn';
+                actions.classList.remove('disabled');
+
+                if (isDealer) {
+                    drawBtn.classList.remove('hidden');
+                    passBtn.classList.add('hidden');
+                } else {
+                    drawBtn.classList.add('hidden');
+                    passBtn.classList.remove('hidden');
+                }
+            } else {
+                indicator.textContent = 'In attesa del tuo turno...';
+                indicator.className = 'turn-indicator waiting-turn';
+                actions.classList.add('disabled');
+            }
+        }
+
+        function updateLivesDisplay() {
+            document.getElementById('my-lives').textContent = '❤️'.repeat(myLives) + '🖤'.repeat(3 - myLives);
+        }
+
+        function showError(msg) {
+            document.getElementById('error-msg').textContent = msg;
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showNotification(icon, text, type = '') {
+            const notif = document.getElementById('notification');
+            document.getElementById('notify-icon').textContent = icon;
+            document.getElementById('notify-text').textContent = text;
+            notif.className = 'notification' + (type ? ' ' + type : '');
+            notif.classList.remove('hidden');
+
+            setTimeout(() => {
+                notif.classList.add('hidden');
+            }, 2500);
+        }
+
+        // Prevent pull-to-refresh
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.card-area')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
