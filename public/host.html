@@ -8,9 +8,10 @@
     <meta http-equiv="Expires" content="0">
     <title>QuizPartyWar - Host</title>
     <link rel="stylesheet" href="/css/common.css?v=17">
-    <link rel="stylesheet" href="/css/host.css?v=24">
+    <link rel="stylesheet" href="/css/host.css?v=27">
 </head>
 <body>
+    <a href="/" class="btn-back-lobby">&#8592; Lobby</a>
     <div class="host-container">
         <!-- Welcome Screen (hidden - game creates automatically) -->
         <div id="welcome-screen" class="hidden">
@@ -21,6 +22,7 @@
         <!-- Lobby Screen -->
         <div id="lobby-screen" class="hidden">
             <h1 class="lobby-title">QuizPartyWar</h1>
+            <button id="btn-start-game" class="btn-start-lobby" disabled>START</button>
             <div class="pin-display">
                 <div class="pin-label">Entra su questo sito e inserisci il PIN:</div>
                 <div class="pin-code" id="game-pin">----</div>
@@ -39,8 +41,6 @@
                 <div class="auto-start-countdown" id="auto-start-countdown">
                     Partita automatica in <span id="countdown-timer">45</span>s
                 </div>
-                <button id="btn-start-game" class="btn btn-success" disabled>AVVIA PARTITA</button>
-                <button id="btn-reload-game" class="btn btn-danger">RICARICA</button>
             </div>
         </div>
 
@@ -161,6 +161,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/host.js?v=26"></script>
+    <script src="/js/host.js?v=27"></script>
 </body>
 </html>

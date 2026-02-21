@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Elemental Clash - Arena</title>
-    <link rel="stylesheet" href="/css/common.css?v=1">
-    <link rel="stylesheet" href="/css/elemental-host.css?v=1">
+    <link rel="stylesheet" href="/css/common.css?v=2">
+    <link rel="stylesheet" href="/css/elemental-host.css?v=2">
 </head>
 <body>
+    <a href="/" class="btn-back-lobby">&#8592; Lobby</a>
     <div class="arena-container">
         <!-- Lobby Screen -->
         <div id="lobby-screen">
@@ -27,10 +28,17 @@
             </div>
 
             <div class="lobby-actions">
-                <div class="auto-start-countdown" id="auto-start-countdown">
-                    Partita automatica in <span id="countdown-timer">60</span>s
+                <div class="auto-start-countdown hidden" id="auto-start-countdown">
+                    La partita parte tra <span id="countdown-timer">50</span>s
                 </div>
-                <button id="btn-start-game" class="btn btn-fire" disabled>INIZIA BATTAGLIA</button>
+                <button id="btn-start-game" class="btn-start-lobby" disabled>START</button>
+            </div>
+        </div>
+
+        <!-- Countdown Screen -->
+        <div id="countdown-screen" class="hidden">
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;width:100%;min-height:80vh;">
+                <div id="countdown-display" style="font-size:12rem;font-weight:bold;color:white;text-shadow:0 0 40px rgba(239,68,68,0.5);animation:pulse 0.5s ease-in-out;">3</div>
             </div>
         </div>
 
@@ -130,6 +138,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/elemental-host.js?v=1"></script>
+    <script src="/js/elemental-host.js?v=2"></script>
 </body>
 </html>

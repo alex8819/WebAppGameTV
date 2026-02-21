@@ -200,6 +200,62 @@ input::placeholder {
     color: var(--gray);
 }
 
+/* Back to lobby button */
+.btn-back-lobby {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--light);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+    backdrop-filter: blur(8px);
+}
+
+.btn-back-lobby:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Start game button - top right */
+.btn-start-lobby {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--light);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    backdrop-filter: blur(8px);
+}
+
+.btn-start-lobby:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-start-lobby:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Logo */
 .logo {
     font-size: 3rem;
